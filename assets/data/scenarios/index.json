@@ -1,0 +1,50 @@
+[
+ {
+  "id": "success",
+  "event_id": 880,
+  "outcome": "TP",
+  "has_maneuver": true,
+  "camera": "typical",
+  "selection_rule": "true-positive V2 trigger needing a manoeuvre with the most input CDMs (V1 rule)"
+ },
+ {
+  "id": "rescued",
+  "event_id": 735,
+  "outcome": "TP",
+  "has_maneuver": true,
+  "camera": "typical",
+  "selection_rule": "first test event promoted by the V2 ML guard that was truly high-risk"
+ },
+ {
+  "id": "false_alarm",
+  "event_id": 908,
+  "outcome": "FP",
+  "has_maneuver": true,
+  "camera": "typical",
+  "selection_rule": "false-positive trigger with the median avoidance dv among planned false alarms"
+ },
+ {
+  "id": "missed",
+  "event_id": 253,
+  "outcome": "FN",
+  "has_maneuver": false,
+  "camera": null,
+  "selection_rule": "V1 missed-event demo (high-risk event not triggered), kept for continuity"
+ },
+ {
+  "id": "quiet",
+  "event_id": 362,
+  "outcome": "TN",
+  "has_maneuver": false,
+  "camera": null,
+  "selection_rule": "V1 true-negative demo event (low risk, no trigger)"
+ },
+ {
+  "id": "difficult",
+  "event_id": 1984,
+  "outcome": "TP",
+  "has_maneuver": true,
+  "camera": "late_detection",
+  "selection_rule": "numerically repaired plan with the largest uncorrected J2 recovery residual"
+ }
+]

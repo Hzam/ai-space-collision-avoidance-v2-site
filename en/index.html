@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predict · Observe · Avoid · Recover — Collision-Avoidance Decision Prototype</title>
+<meta name="description" content="Ibdaa 2027 student research project: an integrated collision-avoidance decision-support prototype combining real ESA conjunction-risk data with simulated onboard visual tracking and fuel-efficient avoidance-and-recovery manoeuvre planning.">
+<link rel="stylesheet" href="../assets/css/site.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%2338bdf8'/%3E%3Cellipse cx='16' cy='16' rx='15' ry='6' fill='none' stroke='%232dd4bf' stroke-width='2'/%3E%3C/svg%3E">
+</head>
+<body data-root="../">
+<header class="top"><div class="wrap">
+  <div class="brand">Predict · Observe · Avoid · Recover<small>Ibdaa 2027 Student Research Project</small></div>
+  <nav class="main"><a href="#mission">Mission replay</a><a href="#why">Why</a><a href="#how">How it works</a><a href="#real">Real vs simulated</a><a href="#results">Results</a><a href="#limits">Limitations</a><a href="#future">Future</a></nav>
+  <a class="lang" href="../ar/" hreflang="ar" lang="ar">العربية</a>
+</div></header>
+
+<main>
+<section class="hero"><div class="wrap">
+  <h1>An integrated collision-avoidance decision prototype</h1>
+  <p class="lead">A research prototype that combines <strong>real ESA conjunction-risk data</strong> with <strong>simulated onboard visual tracking</strong> and <strong>fuel-efficient avoidance-and-recovery manoeuvre planning</strong>. It predicts which close approach deserves attention, observes the threat, avoids it, and then brings the satellite back to its mission trajectory.</p>
+  <div class="chips">
+    <span class="chip predict">PREDICT</span><span class="arrow">→</span><span class="chip observe">OBSERVE</span><span class="arrow">→</span>
+    <span class="chip act">AVOID</span><span class="arrow">→</span><span class="chip recover">RECOVER</span>
+    <button class="btn primary big" data-run-mission style="margin-inline-start:12px">▶ RUN MISSION</button>
+  </div>
+  <p class="disclaimer">Research prototype, not flight software. <span class="badge real">REAL</span> ESA CDM data · <span class="badge sim">SIMULATED</span> camera images, manoeuvres and recovery.</p>
+</div></section>
+
+<section class="mc" id="mission"><div class="wrap">
+ <div class="mc-shell">
+  <div class="mc-top">
+    <span class="mc-title">Mission control replay</span>
+    <span class="mc-clock" id="mc-clock">T−0.0 h</span>
+    <span class="status monitor" id="mc-status">MONITORING</span>
+    <span class="spacer"></span>
+    <button class="btn" id="btn-auto" aria-pressed="true">Autoplay</button>
+    <button class="btn" id="btn-explore" aria-pressed="false">Explore scenarios</button>
+  </div>
+  <div class="mc-grid">
+    <div class="panel left">
+      <h3>ESA risk data <span class="badge real">REAL</span></h3>
+      <canvas id="risk-cv" aria-label="Reported collision risk versus time to closest approach"></canvas>
+      <div class="readouts">
+        <div class="ro"><div class="k">Time to TCA</div><div class="v" id="ro-ttca">—</div></div>
+        <div class="ro"><div class="k">CDMs received</div><div class="v" id="ro-ncdm">—</div></div>
+        <div class="ro"><div class="k">Latest reported risk <bdi dir="ltr" class="ltr">(log10 Pc)</bdi></div><div class="v" id="ro-latest">—</div></div>
+        <div class="ro"><div class="k">ML alert probability</div><div class="v" id="ro-prob">—</div></div>
+        <div class="ro"><div class="k">Predicted final risk</div><div class="v" id="ro-pred">—</div></div>
+        <div class="ro"><div class="k">Observation trigger</div><div class="v" id="ro-trig">—</div></div>
+      </div>
+      <div class="cdm-list" id="cdm-list"></div>
+    </div>
+    <div class="panel center">
+      <h3>Orbit scene <span class="badge sim">SIMULATED</span> on <span class="badge real">REAL</span> geometry</h3>
+      <div class="view-tabs">
+        <button class="btn" data-view="earth" aria-pressed="true">Earth view</button>
+        <button class="btn" data-view="rel" aria-pressed="false">Distance from nominal</button>
+        <button class="btn" data-view="enc" aria-pressed="false">Closest approach</button>
+        <label style="font-size:12.5px;color:var(--muted);display:inline-flex;gap:5px;align-items:center"><input type="checkbox" id="view-auto" checked> auto</label>
+      </div>
+      <canvas id="orbit-cv" aria-label="Orbit and manoeuvre animation"></canvas>
+      <div class="legend" id="rel-legend"><span class="lg-nominal">nominal (phantom) satellite</span><span class="lg-avoid">avoidance only</span><span class="lg-twoimp">2-impulse (phase offset)</span><span class="lg-recover">selected 3-impulse plan</span><span class="lg-threat">TCA / debris</span></div>
+    </div>
+    <div class="panel right">
+      <h3>Onboard RGB camera <span class="badge sim">SIMULATED</span></h3>
+      <canvas id="cam-cv" aria-label="Synthetic camera frames with detector and tracker output"></canvas>
+      <div class="readouts">
+        <div class="ro"><div class="k">YOLO confidence</div><div class="v" id="ro-conf">—</div></div>
+        <div class="ro"><div class="k">Track</div><div class="v" id="ro-track">—</div></div>
+        <div class="ro"><div class="k">Bearing (az, el)</div><div class="v" id="ro-bearing">—</div></div>
+        <div class="ro"><div class="k">Angular rate</div><div class="v" id="ro-rate">—</div></div>
+        <div class="ro"><div class="k">Frame</div><div class="v" id="ro-frame">—</div></div>
+        <div class="ro"><div class="k">Range</div><div class="v">not measured (one camera)</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="caption" aria-live="polite"><div class="txt" id="cap-txt"></div></div>
+  <div class="timeline">
+    <div class="chapters" id="chapters"></div>
+    <input type="range" class="scrub" id="scrub" min="0" max="1000" value="0" aria-label="Mission timeline">
+    <div class="controls">
+      <button class="btn primary" id="btn-play">Play</button>
+      <button class="btn" id="btn-restart">Restart</button>
+      <label>Speed <select id="sel-speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="2">2×</option><option value="4">4×</option></select></label>
+    </div>
+    <div class="explore" id="explore">
+      <label>Scenario <select id="sel-scenario"></select></label>
+      <label>Perception <select id="sel-perc"></select></label>
+      <label>Safety margin <select id="sel-margin"></select></label>
+    </div>
+  </div>
+  <div class="summary" id="summary"></div>
+  <p class="mc-note">Every value shown comes from saved results: real ESA CDMs, frozen model outputs, and precomputed manoeuvre, Monte Carlo and camera files. The browser only animates between them. The camera sequence is an illustrative synthetic approach from the tracking experiment, and its measured bearing error is what drives the manoeuvre uncertainty.</p>
+ </div>
+ <p style="margin-top:12px"><a href="../assets/video/demo_en.mp4">Offline demo video (MP4)</a></p>
+</div></section>
+
+<section class="content" id="why"><div class="wrap">
+  <h2>Why it matters</h2>
+  <p>Thousands of close approaches between satellites and debris are forecast every week. Operators receive <strong>Conjunction Data Messages (CDMs)</strong>, but the final risk is often clear only close to the time of closest approach (TCA). A manoeuvre must be prepared days earlier. Every manoeuvre also costs fuel and pushes the satellite off the orbit its mission needs. A useful decision-support system should therefore answer four questions: <em>which</em> events need attention, <em>where</em> the threat is, <em>how</em> to avoid it cheaply, and <em>how</em> to return to the mission orbit afterwards.</p>
+</div></section>
+
+<section class="content" id="how"><div class="wrap">
+  <h2>How it works</h2>
+  <div class="pipeline">
+    <div class="st"><h4>1 · Predict <span class="badge real">REAL</span></h4><p>From the ESA CDM history available 2 days before TCA, the latest reported risk is kept as a strong baseline. A small <bdi dir="ltr" class="ltr">ExtraTrees</bdi> model may add an alert for borderline events (a <em>guarded hybrid</em>).</p></div>
+    <div class="st"><h4>2 · Observe <span class="badge sim">SIM</span></h4><p>An alert points a simulated onboard RGB camera at the threat. A fine-tuned <bdi dir="ltr" class="ltr">YOLO</bdi> detector finds the object, and a Kalman tracker measures its bearing and angular rate. One camera gives direction, not reliable range.</p></div>
+    <div class="st"><h4>3 · Avoid <span class="badge sim">SIM</span></h4><p>1,830 candidate burns are tested on the real encounter geometry. The cheapest burn with miss distance ≥ 1 km and Pc ≤ 10⁻⁶ is chosen and then checked with a numerical orbit integration that includes J2.</p></div>
+    <div class="st"><h4>4 · Recover <span class="badge sim">SIM</span></h4><p>After the debris passes, two more burns bring the satellite back to the position it would have had without the manoeuvre (a phasing return), within 50 m and 1 mm/s.</p></div>
+  </div>
+  <p>The manoeuvre architecture follows published avoid-and-return designs (three impulses: one avoidance plus two return burns). The prediction families tested are also published. <strong>The contribution of this project is the integration and the honest evaluation of these components as one end-to-end chain, including how measured perception error and burn-execution error affect both safety and recovery.</strong></p>
+</div></section>
+
+<section class="content" id="real"><div class="wrap">
+  <h2>What is real and what is simulated</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Part</th><th>Status</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr><td>Conjunction risk data (CDMs)</td><td><span class="badge real">REAL</span></td><td>ESA Kelvins Collision Avoidance Challenge dataset (CC BY 4.0): <bdi dir="ltr" data-v="prediction.dataset.train_events" data-fmt="int"></bdi> training events and <bdi dir="ltr" data-v="prediction.dataset.test_events" data-fmt="int"></bdi> official test events.</td></tr>
+      <tr><td>Risk prediction and scores</td><td><span class="badge real">REAL</span></td><td>Models trained and tuned on the training file only, then frozen and scored once on the official test set.</td></tr>
+      <tr><td>Encounter geometry and covariance</td><td><span class="badge real">REAL</span></td><td>Miss vector, relative velocity, uncertainties and orbit taken from the latest CDM available 2 days before TCA.</td></tr>
+      <tr><td>Camera images, YOLO detections, tracking</td><td><span class="badge sim">SIMULATED</span></td><td>Synthetic pinhole-camera images. ESA provides no imagery. Detector and tracker outputs are real outputs of our models on those synthetic images.</td></tr>
+      <tr><td>Manoeuvres, closest-approach outcome, recovery</td><td><span class="badge sim">SIMULATED</span></td><td>Clohessy–Wiltshire planning, verified with numerical two-body and J2 integration. No real satellite was manoeuvred.</td></tr>
+      <tr><td>Uncertainty</td><td><span class="badge sim">SIMULATED</span></td><td>Monte Carlo with the bearing error measured in our tracking experiment, plus burn-execution and navigation errors.</td></tr>
+    </tbody></table></div>
+</div></section>
+
+<section class="content" id="results"><div class="wrap">
+  <h2>Results</h2>
+  <h3>Collision-risk prediction <span class="badge real">REAL</span></h3>
+  <div class="cards">
+    <div class="card"><div class="lbl">Official ESA score, latest-risk baseline (test)</div><div class="big"><bdi dir="ltr" data-v="prediction.baseline.test.L" data-fmt="3"></bdi></div><div class="sub">reproduces the published 0.694 · lower is better</div></div>
+    <div class="card"><div class="lbl">V2 selected model: guarded hybrid (test)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="3"></bdi></div><div class="sub"><bdi dir="ltr" data-v="prediction.selected.test.improvement_vs_LRP_pct" data-fmt="1" data-unit="%"></bdi> better than the baseline; not statistically significant</div></div>
+    <div class="card"><div class="lbl">F2 (selected vs baseline)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.F2" data-fmt="3"></bdi></div><div class="sub">baseline <bdi dir="ltr" data-v="prediction.baseline.test.F2" data-fmt="3"></bdi></div></div>
+    <div class="card"><div class="lbl">Test events changed by the ML guard</div><div class="big"><bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_events" data-fmt="int"></bdi></div><div class="sub"><bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_true_high" data-fmt="int"></bdi> truly high-risk · <bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_false_alarm" data-fmt="int"></bdi> false alarms</div></div>
+  </div>
+  <p>We tested <bdi dir="ltr" data-v="prediction.experiments.length" data-fmt="int"></bdi> frozen experiments: the latest-risk baseline, classifiers, a two-stage classifier → regressor, guarded hybrids, direct risk regression, a re-tuned threshold-rule cascade, and a temporal <bdi dir="ltr" class="ltr">GRU</bdi> network trained on a GPU. Each was developed with event-level cross-validation on the training file only. Its settings were then frozen and it was scored <strong>once</strong> on the official test set. The model was chosen on validation, not on test.</p>
+  <div class="callout"><p><strong>Honest result:</strong> the latest reported risk is very hard to beat, as in the original ESA competition. The selected guarded hybrid gives a small improvement (95% interval of the change in score: <bdi dir="ltr" class="ltr num" data-v="prediction.selected.test.delta_L_vs_LRP_ci95.0" data-fmt="3"></bdi> to <bdi dir="ltr" class="ltr num" data-v="prediction.selected.test.delta_L_vs_LRP_ci95.1" data-fmt="3"></bdi>). Two-stage, direct-regression and GRU models were worse than the baseline on validation and on test.</p></div>
+  <div class="table-wrap"><table id="exp-table"></table></div>
+  <div class="figs">
+    <figure><img src="../assets/figures/v2_pred_official_score.png" alt="Official ESA score for every V2 experiment" loading="lazy"><figcaption>Official score on test (left) and validation (right). ★ = selected on validation.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_pred_f2_msehr.png" alt="F2 and MSE_HR for every experiment" loading="lazy"><figcaption>The two parts of the ESA score.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_pred_pr_curves.png" alt="Precision-recall curves" loading="lazy"><figcaption>Precision–recall on the official test set.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_pred_temporal_examples.png" alt="Examples of promoted events" loading="lazy"><figcaption>Real CDM histories: one event correctly rescued by the ML guard, and one false alarm it added.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_pred_regression_high_risk.png" alt="Predicted versus true final risk" loading="lazy"><figcaption>Predicted vs true final risk for the 150 high-risk test events.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_pred_val_vs_test.png" alt="Validation vs test score" loading="lazy"><figcaption>Validation and test scores agree only weakly, as reported by the competition organisers.</figcaption></figure>
+  </div>
+
+  <h3>Avoidance + recovery manoeuvre <span class="badge sim">SIMULATED</span> on <span class="badge real">REAL</span> geometry</h3>
+  <div class="cards">
+    <div class="card"><div class="lbl">Events planned (alerts that needed a manoeuvre)</div><div class="big"><bdi dir="ltr" data-v="maneuver.n_planned" data-fmt="int"></bdi></div><div class="sub">all feasible</div></div>
+    <div class="card"><div class="lbl">Safe at closest approach (two-body + J2)</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi></div><div class="sub">after numerical verification; CW-only plans: <bdi dir="ltr" data-v="maneuver.cw_selected_plan_safe_rate_in_numerical_truth.two_body_J2" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">Returned within 50 m / 1 mm/s</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></div><div class="sub">max position error <bdi dir="ltr" data-v="maneuver.final_J2.resid_r_after_dc_m.max" data-fmt="2" data-unit="m"></bdi></div></div>
+    <div class="card"><div class="lbl">Median Δv: avoid + recover</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.dv_total.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi></div><div class="sub">avoidance <bdi dir="ltr" data-v="maneuver.final_J2.dv_avoid.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi> + recovery <bdi dir="ltr" data-v="maneuver.final_J2.dv_recovery.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi></div></div>
+  </div>
+  <p><strong>Main V2 result:</strong> restoring the mission trajectory costs more fuel than avoiding the debris. With the avoidance burn 2 days before TCA, the satellite drifts about two kilometres from its nominal position. Coming back within about <bdi dir="ltr" data-v="maneuver.recovery_end_after_tca_h.median" data-fmt="0" data-unit="h"></bdi> after TCA needs a median of <bdi dir="ltr" data-v="maneuver.recovery_ratio_rec_over_avoid.median" data-fmt="1"></bdi> times the avoidance Δv. Without recovery (V1), the satellite would be <bdi dir="ltr" data-v="maneuver.architectures.M0_avoidance_only.deviation_tca_plus_2d_m.median" data-fmt="0" data-scale="0.001" data-unit="km"></bdi> off its nominal position 2 days after TCA. A 2-impulse return restores the orbit shape but leaves a median <bdi dir="ltr" data-v="maneuver.architectures.M1_two_impulse_orbit_restore.phase_offset_m.median" data-fmt="1" data-scale="0.001" data-unit="km"></bdi> phase offset.</p>
+  <div class="figs">
+    <figure><img src="../assets/figures/v2_man_trajectory.png" alt="Avoidance and recovery trajectories" loading="lazy"><figcaption>Real geometry of event 880: avoid → pass safely → recover.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_man_fuel_cost.png" alt="Extra fuel to restore the mission" loading="lazy"><figcaption>Extra fuel needed to restore the mission trajectory.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_man_recovery_tradeoff.png" alt="Recovery time vs delta-v" loading="lazy"><figcaption>Faster return costs more fuel. Burning at whole orbits (phasing) is much cheaper than a generic 2-point transfer.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_man_closest_approach.png" alt="Closest approach with and without manoeuvre" loading="lazy"><figcaption>Closest approach with and without the manoeuvre (event 880).</figcaption></figure>
+    <figure><img src="../assets/figures/v2_man_numerical_validation.png" alt="CW vs numerical validation" loading="lazy"><figcaption>Fast analytical planning vs accurate numerical integration, and recovery accuracy.</figcaption></figure>
+    <figure><img src="../assets/figures/v2_man_dv_distribution.png" alt="Delta-v distributions" loading="lazy"><figcaption>Δv per event.</figcaption></figure>
+  </div>
+
+  <h3>Uncertainty: what if the camera is not perfect? <span class="badge sim">SIMULATED</span></h3>
+  <p>The Monte Carlo covers <bdi dir="ltr" data-v="uncertainty.events" data-fmt="int"></bdi> events × <bdi dir="ltr" data-v="uncertainty.n_mc_per_event_case" data-fmt="int"></bdi> draws per setting. Camera bearing error comes from our tracking experiment (typical <bdi dir="ltr" data-v="uncertainty.sigmas_deg.typical_camera_track" data-fmt="3" data-unit="°"></bdi>; including the tracking failure <bdi dir="ltr" data-v="uncertainty.sigmas_deg.including_track_failures" data-fmt="2" data-unit="°"></bdi>, at 10 km range). Every burn has 2% magnitude and 1° pointing error, and recovery burns use our own navigation (1 m, 0.5 mm/s). A safety margin of k·σ assumes the object is closer than estimated.</p>
+  <div class="table-wrap"><table id="unc-table"></table></div>
+  <figure><img src="../assets/figures/v2_unc_margin.png" alt="Safety margin vs safety, delta-v and recovery error" loading="lazy"><figcaption>Safety margin vs safe rate, Δv and recovery error.</figcaption></figure>
+
+  <h4>Recovery under burn and navigation errors</h4>
+  <p>With 2% / 1° burn errors, the pre-registered open-loop return (burns 2 and 3 only) met the 50 m / 1 mm/s tolerance in only <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> of draws, because a tiny error drifts for about two days. A new, separately reported experiment added <strong>closed-loop guidance</strong>: orbit determination from a history of GNSS fixes, 3 small mid-course drift corrections and a final trim. This is the final V2 recovery design.</p>
+  <div class="cards">
+    <div class="card"><div class="lbl">Open loop (pre-registered)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">median error <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.rr_median" data-fmt="0" data-unit="m"></bdi></div></div>
+    <div class="card"><div class="lbl">Closed loop (final V2)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">median error <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.rr_median" data-fmt="1" data-unit="m"></bdi> · Δv +<bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.dv_increase_vs_open_loop_pct" data-fmt="1" data-unit="%"></bdi></div></div>
+  </div>
+  <figure><img src="../assets/figures/v2_unc_recovery_guidance.png" alt="Recovery success for different guidance and navigation designs" loading="lazy"><figcaption>Navigation velocity error was the limiting factor. Orbit determination plus small trims restores the tolerance.</figcaption></figure>
+
+  <h3>V1 → V2</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>V1</th><th>V2</th></tr></thead>
+    <tbody>
+      <tr><td>Prediction</td><td>No model beat the latest-risk baseline (Random Forest score <bdi dir="ltr" class="ltr num">0.967</bdi>)</td><td>Guarded hybrid <bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="3"></bdi> vs baseline <bdi dir="ltr" data-v="prediction.baseline.test.L" data-fmt="3"></bdi>: a small, honest, non-significant gain. Wider comparison (two-stage, regression, GRU).</td></tr>
+      <tr><td>Manoeuvre</td><td>Avoidance only. The satellite stays off its orbit.</td><td>Avoidance + safe passage + phasing return to the nominal trajectory (3 burns)</td></tr>
+      <tr><td>Validation</td><td>Clohessy–Wiltshire model</td><td>Numerical two-body + J2 check of every plan, with automatic repair</td></tr>
+      <tr><td>Uncertainty</td><td>Avoidance only</td><td>Avoidance <em>and</em> recovery: perception, execution and navigation errors</td></tr>
+      <tr><td>Demo</td><td>Step-by-step pages</td><td>Interactive mission-control replay, failure scenarios, bilingual</td></tr>
+    </tbody></table></div>
+</div></section>
+
+<section class="content" id="limits"><div class="wrap">
+  <h2>Limitations</h2>
+  <ul>
+    <li><strong>Prediction:</strong> only 66 high-risk training events. The improvement over the baseline is small and not statistically significant, and validation and test agree only weakly.</li>
+    <li><strong>Camera:</strong> images are synthetic, so there is a sim-to-real gap. One camera measures direction, not reliable range; range from apparent size is exploratory only. The visual sequence is slower and closer than a real 12 km/s encounter.</li>
+    <li><strong>Dynamics:</strong> planning uses Clohessy–Wiltshire (circular orbit). Verification includes J2 but not drag or solar pressure. Pc is computed with a 2D short-encounter approximation.</li>
+    <li><strong>Thresholds:</strong> the 1 km / 10⁻⁶ safety rule and the 50 m / 1 mm/s recovery tolerance are experimental design values, not agency requirements.</li>
+    <li><strong>Monte Carlo:</strong> uses the analytical model as truth. Model error is handled separately by the numerical verification step. The safety margin covers perception error only, so cheapest plans can still fail under burn execution error (a margin for execution error is future work).</li>
+    <li>No real satellite was manoeuvred, and this is not flight software.</li>
+  </ul>
+</div></section>
+
+<section class="content" id="future"><div class="wrap">
+  <h2>Future operational system</h2>
+  <p>Possible users are satellite operators, space-traffic-management research and onboard-autonomy research. Next steps would be: tests on real space imagery, angles-only range estimation with deliberate observer manoeuvres, a higher-fidelity force model (drag, solar pressure), robust planning that uses the full uncertainty distribution, and evaluation with operator feedback. The system is an early research prototype; no technology-readiness level is claimed.</p>
+</div></section>
+</main>
+
+<footer><div class="wrap">
+  <p>Ibdaa 2027 Student Research Project. Research prototype; not flight-certified and not operational.</p>
+  <p>Data: ESA Kelvins Collision Avoidance Challenge dataset, © ESA, CC BY 4.0, doi:10.5281/zenodo.4463683. Key references: Uriot et al., <em>Astrodynamics</em> 6 (2022); Tulczyjew et al., <em>J. Space Safety Eng.</em> 8 (2021); Clohessy &amp; Wiltshire (1960); Bombardelli &amp; Hernando-Ayuso, <em>JGCD</em> 38 (2015); Pavanello et al., CAMmary review (2025); Li &amp; Zhang, <em>Adv. Space Res.</em> 77 (2026).</p>
+</div></footer>
+<script src="../assets/js/bidi.js"></script>
+<script src="../assets/js/i18n.js"></script>
+<script src="../assets/js/pagetext.js"></script>
+<script src="../assets/js/page.js"></script>
+<script src="../assets/js/mission.js"></script>
+</body>
+</html>
