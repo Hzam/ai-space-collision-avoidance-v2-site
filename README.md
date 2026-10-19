@@ -9,7 +9,7 @@ manoeuvre planning.
 * English: `/en/` · العربية: `/ar/`
 * REAL: ESA Kelvins Collision Avoidance Challenge CDM data (risk prediction, encounter geometry).
 * SIMULATED: RGB camera images, detection/tracking scenarios, manoeuvres, recovery and uncertainty Monte Carlo.
-* Every number shown is read from `assets/data/v2_results.json` and the scenario files; the browser only animates them.
+* Every number shown is read from `assets/data/results.json` and the scenario files; the browser only animates them.
 * Research prototype — not flight software, not operational.
 
 ## Data credit

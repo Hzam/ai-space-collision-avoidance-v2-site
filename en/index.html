@@ -32,6 +32,7 @@
   <div class="mc-top">
     <span class="mc-title">Mission control replay</span>
     <span class="mc-clock" id="mc-clock">T−0.0 h</span>
+    <span class="mc-compress" id="mc-compress">Time-compressed mission replay</span>
     <span class="status monitor" id="mc-status">MONITORING</span>
     <span class="spacer"></span>
     <button class="btn" id="btn-auto" aria-pressed="true">Autoplay</button>
@@ -41,6 +42,14 @@
     <div class="panel left">
       <h3>ESA risk data <span class="badge real">REAL</span></h3>
       <canvas id="risk-cv" aria-label="Reported collision risk versus time to closest approach"></canvas>
+      <div class="legend2" id="risk-legend">
+        <span class="c-acc"><i class="sw"></i><span class="lbl">reported risk, one dot per CDM</span></span>
+        <span class="c-white"><i class="sw ring"></i><span class="lbl">last risk available at decision time</span></span>
+        <span class="c-warn"><i class="sw diamond"></i><span class="lbl">model output: alert (grey = no alert, &lt; −6)</span></span>
+        <span class="c-bad"><i class="sw star"></i><span class="lbl">final ESA risk (ground truth, shown at the end)</span></span>
+        <span class="c-bad"><i class="sw dash"></i><span class="lbl">high-risk threshold <bdi dir="ltr">log10 Pc = −6</bdi></span></span>
+        <span class="c-faint"><i class="sw dot2"></i><span class="lbl">decision point: 2 days before TCA</span></span>
+      </div>
       <div class="readouts">
         <div class="ro"><div class="k">Time to TCA</div><div class="v" id="ro-ttca">—</div></div>
         <div class="ro"><div class="k">CDMs received</div><div class="v" id="ro-ncdm">—</div></div>
@@ -60,7 +69,27 @@
         <label style="font-size:12.5px;color:var(--muted);display:inline-flex;gap:5px;align-items:center"><input type="checkbox" id="view-auto" checked> auto</label>
       </div>
       <canvas id="orbit-cv" aria-label="Orbit and manoeuvre animation"></canvas>
-      <div class="legend" id="rel-legend"><span class="lg-nominal">nominal (phantom) satellite</span><span class="lg-avoid">avoidance only</span><span class="lg-twoimp">2-impulse (phase offset)</span><span class="lg-recover">selected 3-impulse plan</span><span class="lg-threat">TCA / debris</span></div>
+      <div class="legend2" id="earth-legend">
+        <span class="c-nom"><i class="sw"></i><span class="lbl">nominal / reference orbit</span></span>
+        <span class="c-white"><i class="sw dot"></i><span class="lbl">our spacecraft</span></span>
+        <span class="c-thr"><i class="sw dash"></i><span class="lbl">threat (debris) orbit</span></span>
+        <span class="c-thr"><i class="sw dot"></i><span class="lbl">debris / object</span></span>
+        <span class="c-warn"><i class="sw ring"></i><span class="lbl">TCA point</span></span>
+      </div>
+      <p class="view-note" id="earth-legend-note">The manoeuvre moves the spacecraft by metres to kilometres, which is far too small to see at Earth scale (Earth radius 6,371 km). The <b>Distance from nominal</b> view shows the detailed deviation.</p>
+      <div class="legend2" id="rel-legend">
+        <span class="c-nom"><i class="sw"></i><span class="lbl">nominal / reference trajectory (distance 0)</span></span>
+        <span class="c-rec"><i class="sw"></i><span class="lbl">selected trajectory: avoidance, then recovery</span></span>
+        <span class="c-avoid"><i class="sw dash"></i><span class="lbl">avoidance only (no recovery)</span></span>
+        <span class="c-two"><i class="sw dot2"></i><span class="lbl">single return burn (phase offset remains)</span></span>
+        <span class="c-avoid"><i class="sw dot"></i><span class="lbl">burn 1 (avoid)</span></span>
+        <span class="c-rec"><i class="sw dot"></i><span class="lbl">recovery burns and small trims</span></span>
+        <span class="c-thr"><i class="sw dash"></i><span class="lbl">TCA (debris passes)</span></span>
+        <span class="c-white"><i class="sw dot"></i><span class="lbl">our spacecraft now</span></span>
+      </div>
+      <div class="legend2" id="enc-legend">
+        <span class="c-muted"><span class="lbl">Encounter plane at TCA: our spacecraft at the centre; the 1 km circle is the safety distance; the ellipses show the position uncertainty; the two points show where the debris passes without and with the manoeuvre.</span></span>
+      </div>
     </div>
     <div class="panel right">
       <h3>Onboard RGB camera <span class="badge sim">SIMULATED</span></h3>
@@ -107,9 +136,9 @@
     <div class="st"><h4>1 · Predict <span class="badge real">REAL</span></h4><p>From the ESA CDM history available 2 days before TCA, the latest reported risk is kept as a strong baseline. A small <bdi dir="ltr" class="ltr">ExtraTrees</bdi> model may add an alert for borderline events (a <em>guarded hybrid</em>).</p></div>
     <div class="st"><h4>2 · Observe <span class="badge sim">SIM</span></h4><p>An alert points a simulated onboard RGB camera at the threat. A fine-tuned <bdi dir="ltr" class="ltr">YOLO</bdi> detector finds the object, and a Kalman tracker measures its bearing and angular rate. One camera gives direction, not reliable range.</p></div>
     <div class="st"><h4>3 · Avoid <span class="badge sim">SIM</span></h4><p>1,830 candidate burns are tested on the real encounter geometry. The cheapest burn with miss distance ≥ 1 km and Pc ≤ 10⁻⁶ is chosen and then checked with a numerical orbit integration that includes J2.</p></div>
-    <div class="st"><h4>4 · Recover <span class="badge sim">SIM</span></h4><p>After the debris passes, two more burns bring the satellite back to the position it would have had without the manoeuvre (a phasing return), within 50 m and 1 mm/s.</p></div>
+    <div class="st"><h4>4 · Recover <span class="badge sim">SIM</span></h4><p>After the debris passes, two more main burns bring the satellite back to the position it would have had without the manoeuvre (a phasing return), within 50 m and 1 mm/s. Under realistic errors, small closed-loop correction burns keep the return on target.</p></div>
   </div>
-  <p>The manoeuvre architecture follows published avoid-and-return designs (three impulses: one avoidance plus two return burns). The prediction families tested are also published. <strong>The contribution of this project is the integration and the honest evaluation of these components as one end-to-end chain, including how measured perception error and burn-execution error affect both safety and recovery.</strong></p>
+  <p>The manoeuvre architecture follows published avoid-and-return designs (three main impulses: one avoidance plus two return burns). The prediction families tested are also published. <strong>The contribution of this project is the integration and the honest evaluation of these components as one end-to-end chain, including how measured perception error and burn-execution error affect both safety and recovery.</strong></p>
 </div></section>
 
 <section class="content" id="real"><div class="wrap">
@@ -131,62 +160,84 @@
   <h3>Collision-risk prediction <span class="badge real">REAL</span></h3>
   <div class="cards">
     <div class="card"><div class="lbl">Official ESA score, latest-risk baseline (test)</div><div class="big"><bdi dir="ltr" data-v="prediction.baseline.test.L" data-fmt="3"></bdi></div><div class="sub">reproduces the published 0.694 · lower is better</div></div>
-    <div class="card"><div class="lbl">V2 selected model: guarded hybrid (test)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="3"></bdi></div><div class="sub"><bdi dir="ltr" data-v="prediction.selected.test.improvement_vs_LRP_pct" data-fmt="1" data-unit="%"></bdi> better than the baseline; not statistically significant</div></div>
+    <div class="card"><div class="lbl">Selected model: guarded hybrid (test)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="4"></bdi></div><div class="sub"><bdi dir="ltr" data-v="prediction.selected.test.improvement_vs_LRP_pct" data-fmt="1" data-unit="%"></bdi> better than the baseline; not statistically significant</div></div>
     <div class="card"><div class="lbl">F2 (selected vs baseline)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.F2" data-fmt="3"></bdi></div><div class="sub">baseline <bdi dir="ltr" data-v="prediction.baseline.test.F2" data-fmt="3"></bdi></div></div>
     <div class="card"><div class="lbl">Test events changed by the ML guard</div><div class="big"><bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_events" data-fmt="int"></bdi></div><div class="sub"><bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_true_high" data-fmt="int"></bdi> truly high-risk · <bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_false_alarm" data-fmt="int"></bdi> false alarms</div></div>
   </div>
-  <p>We tested <bdi dir="ltr" data-v="prediction.experiments.length" data-fmt="int"></bdi> frozen experiments: the latest-risk baseline, classifiers, a two-stage classifier → regressor, guarded hybrids, direct risk regression, a re-tuned threshold-rule cascade, and a temporal <bdi dir="ltr" class="ltr">GRU</bdi> network trained on a GPU. Each was developed with event-level cross-validation on the training file only. Its settings were then frozen and it was scored <strong>once</strong> on the official test set. The model was chosen on validation, not on test.</p>
+  <p>The selected method is the <strong>Latest Risk baseline plus an ExtraTrees-based guarded alert</strong>: it never lowers or removes a baseline alert; it can only add an alert for a borderline event. It is not a new continuous-risk predictor: continuous-risk models were tested but not selected. We tested <bdi dir="ltr" data-v="prediction.experiments.length" data-fmt="int"></bdi> frozen experiments: the latest-risk baseline, classifiers, a two-stage classifier → regressor, guarded hybrids, direct risk regression, a re-tuned threshold-rule cascade, and a temporal <bdi dir="ltr" class="ltr">GRU</bdi> network trained on a GPU. Each was developed with event-level cross-validation on the training file only. Its settings were then frozen and it was scored <strong>once</strong> on the official test set. The model was chosen on validation, not on test.</p>
   <div class="callout"><p><strong>Honest result:</strong> the latest reported risk is very hard to beat, as in the original ESA competition. The selected guarded hybrid gives a small improvement (95% interval of the change in score: <bdi dir="ltr" class="ltr num" data-v="prediction.selected.test.delta_L_vs_LRP_ci95.0" data-fmt="3"></bdi> to <bdi dir="ltr" class="ltr num" data-v="prediction.selected.test.delta_L_vs_LRP_ci95.1" data-fmt="3"></bdi>). Two-stage, direct-regression and GRU models were worse than the baseline on validation and on test.</p></div>
+
+  <h4>Comparison with published results (official ESA test set; lower L is better)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Method / team</th><th>Published</th><th>Approach</th><th>L</th><th>F2</th><th>MSE_HR</th><th>Relation to our method</th></tr></thead>
+    <tbody>
+      <tr><td>Latest Risk baseline</td><td>Uriot et al. 2022</td><td>final risk = latest reported risk</td><td><bdi dir="ltr" class="ltr num">0.694</bdi></td><td><bdi dir="ltr" class="ltr num">0.739</bdi></td><td><bdi dir="ltr" class="ltr num">0.513</bdi></td><td>our baseline and guardrail</td></tr>
+      <tr><td>sesc (1st)</td><td>in Uriot et al. 2022</td><td>hand-tuned threshold rules; test-leaderboard probing reported</td><td><bdi dir="ltr" class="ltr num">0.556</bdi></td><td><bdi dir="ltr" class="ltr num">0.733</bdi></td><td><bdi dir="ltr" class="ltr num">0.407</bdi></td><td>re-tuned without test probing, it overfitted</td></tr>
+      <tr><td>Magpies (3rd)</td><td>in Uriot et al. 2022</td><td>Siamese LSTM flags low-risk events that become high-risk</td><td><bdi dir="ltr" class="ltr num">0.585</bdi></td><td><bdi dir="ltr" class="ltr num">0.753</bdi></td><td><bdi dir="ltr" class="ltr num">0.441</bdi></td><td>closest idea to ours</td></tr>
+      <tr><td>DunderMifflin / KP Labs (7th)</td><td>Tulczyjew et al. 2021</td><td>two-stage: classifier, then high-risk regressor</td><td><bdi dir="ltr" class="ltr num">0.628</bdi></td><td><bdi dir="ltr" class="ltr num">0.718</bdi></td><td><bdi dir="ltr" class="ltr num">0.451</bdi></td><td>re-tested under our protocol: worse than the baseline</td></tr>
+      <tr><td>ESA organisers' LightGBM (post-competition)</td><td>Uriot et al. 2022</td><td>residual regression on the latest risk</td><td><bdi dir="ltr" class="ltr num">0.684</bdi></td><td>n/r</td><td>n/r</td><td>our result is close to this</td></tr>
+      <tr><td><strong>This project: guarded hybrid</strong></td><td>2026</td><td>Latest Risk + ExtraTrees guarded alert; chosen on validation</td><td><strong><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="4"></bdi></strong></td><td><bdi dir="ltr" data-v="prediction.selected.test.F2" data-fmt="3"></bdi></td><td><bdi dir="ltr" data-v="prediction.selected.test.MSE_HR" data-fmt="3"></bdi></td><td>slightly better than the baseline, behind the top entries</td></tr>
+    </tbody></table></div>
+  <p>The challenge was held in 2019; the years above are publication years. During the challenge, teams could see scores on part of the test set; our method was selected on training-file validation only. <strong>Our result is not state of the art.</strong></p>
   <div class="table-wrap"><table id="exp-table"></table></div>
   <div class="figs">
-    <figure><img src="../assets/figures/v2_pred_official_score.png" alt="Official ESA score for every V2 experiment" loading="lazy"><figcaption>Official score on test (left) and validation (right). ★ = selected on validation.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_f2_msehr.png" alt="F2 and MSE_HR for every experiment" loading="lazy"><figcaption>The two parts of the ESA score.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_pr_curves.png" alt="Precision-recall curves" loading="lazy"><figcaption>Precision–recall on the official test set.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_temporal_examples.png" alt="Examples of promoted events" loading="lazy"><figcaption>Real CDM histories: one event correctly rescued by the ML guard, and one false alarm it added.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_regression_high_risk.png" alt="Predicted versus true final risk" loading="lazy"><figcaption>Predicted vs true final risk for the 150 high-risk test events.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_val_vs_test.png" alt="Validation vs test score" loading="lazy"><figcaption>Validation and test scores agree only weakly, as reported by the competition organisers.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_official_score.png" alt="Official ESA score for every experiment" loading="lazy"><figcaption>Official score on test (left) and validation (right). ★ = selected on validation.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_f2_msehr.png" alt="F2 and MSE_HR for every experiment" loading="lazy"><figcaption>The two parts of the ESA score.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_pr_curves.png" alt="Precision-recall curves" loading="lazy"><figcaption>Precision–recall on the official test set.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_temporal_examples.png" alt="Examples of promoted events" loading="lazy"><figcaption>Real CDM histories: one event correctly rescued by the ML guard, and one false alarm it added.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_regression_high_risk.png" alt="Predicted versus true final risk" loading="lazy"><figcaption>Predicted vs true final risk for the 150 high-risk test events.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_val_vs_test.png" alt="Validation vs test score" loading="lazy"><figcaption>Validation and test scores agree only weakly, as reported by the competition organisers.</figcaption></figure>
   </div>
 
   <h3>Avoidance + recovery manoeuvre <span class="badge sim">SIMULATED</span> on <span class="badge real">REAL</span> geometry</h3>
+  <p><strong>Nominal, numerically verified plans</strong> (one plan per event, no errors). The 100% figures below apply only to these nominal plans; results under realistic errors follow in the next section.</p>
   <div class="cards">
     <div class="card"><div class="lbl">Events planned (alerts that needed a manoeuvre)</div><div class="big"><bdi dir="ltr" data-v="maneuver.n_planned" data-fmt="int"></bdi></div><div class="sub">all feasible</div></div>
-    <div class="card"><div class="lbl">Safe at closest approach (two-body + J2)</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi></div><div class="sub">after numerical verification; CW-only plans: <bdi dir="ltr" data-v="maneuver.cw_selected_plan_safe_rate_in_numerical_truth.two_body_J2" data-fmt="pct"></bdi></div></div>
-    <div class="card"><div class="lbl">Returned within 50 m / 1 mm/s</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></div><div class="sub">max position error <bdi dir="ltr" data-v="maneuver.final_J2.resid_r_after_dc_m.max" data-fmt="2" data-unit="m"></bdi></div></div>
+    <div class="card"><div class="lbl">Nominal plans safe at closest approach (verified incl. J2)</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi></div><div class="sub">after numerical verification; CW-only plans: <bdi dir="ltr" data-v="maneuver.cw_selected_plan_safe_rate_in_numerical_truth.two_body_J2" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">Nominal plans returned within 50 m / 1 mm/s</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></div><div class="sub">max position error <bdi dir="ltr" data-v="maneuver.final_J2.resid_r_after_dc_m.max" data-fmt="2" data-unit="m"></bdi></div></div>
     <div class="card"><div class="lbl">Median Δv: avoid + recover</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.dv_total.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi></div><div class="sub">avoidance <bdi dir="ltr" data-v="maneuver.final_J2.dv_avoid.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi> + recovery <bdi dir="ltr" data-v="maneuver.final_J2.dv_recovery.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi></div></div>
   </div>
-  <p><strong>Main V2 result:</strong> restoring the mission trajectory costs more fuel than avoiding the debris. With the avoidance burn 2 days before TCA, the satellite drifts about two kilometres from its nominal position. Coming back within about <bdi dir="ltr" data-v="maneuver.recovery_end_after_tca_h.median" data-fmt="0" data-unit="h"></bdi> after TCA needs a median of <bdi dir="ltr" data-v="maneuver.recovery_ratio_rec_over_avoid.median" data-fmt="1"></bdi> times the avoidance Δv. Without recovery (V1), the satellite would be <bdi dir="ltr" data-v="maneuver.architectures.M0_avoidance_only.deviation_tca_plus_2d_m.median" data-fmt="0" data-scale="0.001" data-unit="km"></bdi> off its nominal position 2 days after TCA. A 2-impulse return restores the orbit shape but leaves a median <bdi dir="ltr" data-v="maneuver.architectures.M1_two_impulse_orbit_restore.phase_offset_m.median" data-fmt="1" data-scale="0.001" data-unit="km"></bdi> phase offset.</p>
+  <p><strong>Main manoeuvre result:</strong> restoring the mission trajectory costs more fuel than avoiding the debris. Coming back within about <bdi dir="ltr" data-v="maneuver.recovery_end_after_tca_h.median" data-fmt="0" data-unit="h"></bdi> after TCA needs a median of <bdi dir="ltr" data-v="maneuver.recovery_ratio_rec_over_avoid.median" data-fmt="1"></bdi> times the avoidance Δv. With avoidance only (no recovery), the satellite would be <bdi dir="ltr" data-v="maneuver.architectures.M0_avoidance_only.deviation_tca_plus_2d_m.median" data-fmt="0" data-unit="km" data-scale="0.001"></bdi> off its nominal position 2 days after TCA. A single return burn restores the orbit shape but leaves a median <bdi dir="ltr" data-v="maneuver.architectures.M1_two_impulse_orbit_restore.phase_offset_m.median" data-fmt="1" data-unit="km" data-scale="0.001"></bdi> phase offset. The recovery duration of <bdi dir="ltr" data-v="maneuver.k_star_orbits" data-fmt="int"></bdi> orbits is the selected duration within the tested window (1–32 orbits), not a proven optimum.</p>
   <div class="figs">
-    <figure><img src="../assets/figures/v2_man_trajectory.png" alt="Avoidance and recovery trajectories" loading="lazy"><figcaption>Real geometry of event 880: avoid → pass safely → recover.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_fuel_cost.png" alt="Extra fuel to restore the mission" loading="lazy"><figcaption>Extra fuel needed to restore the mission trajectory.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_recovery_tradeoff.png" alt="Recovery time vs delta-v" loading="lazy"><figcaption>Faster return costs more fuel. Burning at whole orbits (phasing) is much cheaper than a generic 2-point transfer.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_closest_approach.png" alt="Closest approach with and without manoeuvre" loading="lazy"><figcaption>Closest approach with and without the manoeuvre (event 880).</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_numerical_validation.png" alt="CW vs numerical validation" loading="lazy"><figcaption>Fast analytical planning vs accurate numerical integration, and recovery accuracy.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_dv_distribution.png" alt="Delta-v distributions" loading="lazy"><figcaption>Δv per event.</figcaption></figure>
+    <figure><img src="../assets/figures/man_trajectory.png" alt="Avoidance and recovery trajectories" loading="lazy"><figcaption>Real geometry of event 880: avoid → pass safely → recover.</figcaption></figure>
+    <figure><img src="../assets/figures/man_fuel_cost.png" alt="Extra fuel to restore the mission" loading="lazy"><figcaption>Extra fuel needed to restore the mission trajectory.</figcaption></figure>
+    <figure><img src="../assets/figures/man_recovery_tradeoff.png" alt="Recovery time vs delta-v" loading="lazy"><figcaption>Faster return costs more fuel. Burning at whole orbits (phasing) is much cheaper than a generic 2-point transfer.</figcaption></figure>
+    <figure><img src="../assets/figures/man_closest_approach.png" alt="Closest approach with and without manoeuvre" loading="lazy"><figcaption>Closest approach with and without the manoeuvre (event 880).</figcaption></figure>
+    <figure><img src="../assets/figures/man_numerical_validation.png" alt="CW vs numerical validation" loading="lazy"><figcaption>Fast analytical planning vs accurate numerical integration, and recovery accuracy.</figcaption></figure>
+    <figure><img src="../assets/figures/man_dv_distribution.png" alt="Delta-v distributions" loading="lazy"><figcaption>Δv per event.</figcaption></figure>
   </div>
 
-  <h3>Uncertainty: what if the camera is not perfect? <span class="badge sim">SIMULATED</span></h3>
+  <h3>Avoidance under uncertainty: what if the camera is not perfect? <span class="badge sim">SIMULATED</span></h3>
   <p>The Monte Carlo covers <bdi dir="ltr" data-v="uncertainty.events" data-fmt="int"></bdi> events × <bdi dir="ltr" data-v="uncertainty.n_mc_per_event_case" data-fmt="int"></bdi> draws per setting. Camera bearing error comes from our tracking experiment (typical <bdi dir="ltr" data-v="uncertainty.sigmas_deg.typical_camera_track" data-fmt="3" data-unit="°"></bdi>; including the tracking failure <bdi dir="ltr" data-v="uncertainty.sigmas_deg.including_track_failures" data-fmt="2" data-unit="°"></bdi>, at 10 km range). Every burn has 2% magnitude and 1° pointing error, and recovery burns use our own navigation (1 m, 0.5 mm/s). A safety margin of k·σ assumes the object is closer than estimated.</p>
   <div class="table-wrap"><table id="unc-table"></table></div>
-  <figure><img src="../assets/figures/v2_unc_margin.png" alt="Safety margin vs safety, delta-v and recovery error" loading="lazy"><figcaption>Safety margin vs safe rate, Δv and recovery error.</figcaption></figure>
+  <figure><img src="../assets/figures/unc_margin.png" alt="Safety margin vs safety, delta-v and recovery error" loading="lazy"><figcaption>Safety margin vs safe rate, Δv and recovery error.</figcaption></figure>
 
-  <h4>Recovery under burn and navigation errors</h4>
-  <p>With 2% / 1° burn errors, the pre-registered open-loop return (burns 2 and 3 only) met the 50 m / 1 mm/s tolerance in only <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> of draws, because a tiny error drifts for about two days. A new, separately reported experiment added <strong>closed-loop guidance</strong>: orbit determination from a history of GNSS fixes, 3 small mid-course drift corrections and a final trim. This is the final V2 recovery design.</p>
+  <h3>Recovery under uncertainty: burn and navigation errors <span class="badge sim">SIMULATED</span></h3>
+  <p>With 2% / 1° burn errors, the pre-registered open-loop return (burns 2 and 3 only) met the 50 m / 1 mm/s tolerance in only <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> of draws, because a tiny error drifts for about two days. A separately reported experiment added <strong>closed-loop guidance</strong>: orbit determination from a history of GNSS fixes, 3 small mid-course drift corrections and a final trim, on top of the 3 main burns. This is the final recovery design; its success rate belongs to the 3 main burns <em>plus</em> these corrections, not to three burns alone.</p>
   <div class="cards">
     <div class="card"><div class="lbl">Open loop (pre-registered)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">median error <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.rr_median" data-fmt="0" data-unit="m"></bdi></div></div>
-    <div class="card"><div class="lbl">Closed loop (final V2)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">median error <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.rr_median" data-fmt="1" data-unit="m"></bdi> · Δv +<bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.dv_increase_vs_open_loop_pct" data-fmt="1" data-unit="%"></bdi></div></div>
+    <div class="card"><div class="lbl">Closed loop (final design)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">median error <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.rr_median" data-fmt="1" data-unit="m"></bdi> · Δv +<bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.dv_increase_vs_open_loop_pct" data-fmt="1" data-unit="%"></bdi></div></div>
   </div>
-  <figure><img src="../assets/figures/v2_unc_recovery_guidance.png" alt="Recovery success for different guidance and navigation designs" loading="lazy"><figcaption>Navigation velocity error was the limiting factor. Orbit determination plus small trims restores the tolerance.</figcaption></figure>
+  <figure><img src="../assets/figures/unc_recovery_guidance.png" alt="Recovery success for different guidance and navigation designs" loading="lazy"><figcaption>Navigation velocity error was the limiting factor. Orbit determination plus small trims restores the tolerance.</figcaption></figure>
 
-  <h3>V1 → V2</h3>
+  <h3>Final integrated end-to-end test <span class="badge sim">SIMULATED</span> on <span class="badge real">REAL</span> geometry</h3>
+  <p>One Monte Carlo draw passes the whole chain: camera bearing error (tracking failures at their measured rate) → avoidance plan with a 3σ margin → burn executed with error → safety checked on the true ESA geometry → closed-loop recovery (3 main burns + small corrections, every burn with error, orbit-determination navigation). <strong>Success = safe at TCA AND back within 50 m / 1 mm/s in the same draw.</strong></p>
+  <div class="cards">
+    <div class="card"><div class="lbl">Safe at TCA AND recovered</div><div class="big"><bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_rate" data-fmt="pct"></bdi></div><div class="sub">95% CI <bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_ci95_event_bootstrap.0" data-fmt="pct"></bdi> – <bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_ci95_event_bootstrap.1" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">Safe at TCA</div><div class="big"><bdi dir="ltr" data-v="end_to_end.headline.safe_rate" data-fmt="pct"></bdi></div><div class="sub">typical camera only: <bdi dir="ltr" data-v="end_to_end.cases.typical_camera_track.safe_rate" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">Recovered within tolerance</div><div class="big"><bdi dir="ltr" data-v="end_to_end.headline.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">closed-loop recovery</div></div>
+    <div class="card"><div class="lbl">Draws</div><div class="big"><bdi dir="ltr" data-v="end_to_end.events" data-fmt="int"></bdi></div><div class="sub">events × <bdi dir="ltr" data-v="end_to_end.draws_per_event_case" data-fmt="int"></bdi> draws per case</div></div>
+  </div>
+  <h3>Four levels of evidence</h3>
   <div class="table-wrap"><table>
-    <thead><tr><th></th><th>V1</th><th>V2</th></tr></thead>
+    <thead><tr><th>Level</th><th>What is tested</th><th>Result</th></tr></thead>
     <tbody>
-      <tr><td>Prediction</td><td>No model beat the latest-risk baseline (Random Forest score <bdi dir="ltr" class="ltr num">0.967</bdi>)</td><td>Guarded hybrid <bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="3"></bdi> vs baseline <bdi dir="ltr" data-v="prediction.baseline.test.L" data-fmt="3"></bdi>: a small, honest, non-significant gain. Wider comparison (two-stage, regression, GRU).</td></tr>
-      <tr><td>Manoeuvre</td><td>Avoidance only. The satellite stays off its orbit.</td><td>Avoidance + safe passage + phasing return to the nominal trajectory (3 burns)</td></tr>
-      <tr><td>Validation</td><td>Clohessy–Wiltshire model</td><td>Numerical two-body + J2 check of every plan, with automatic repair</td></tr>
-      <tr><td>Uncertainty</td><td>Avoidance only</td><td>Avoidance <em>and</em> recovery: perception, execution and navigation errors</td></tr>
-      <tr><td>Demo</td><td>Step-by-step pages</td><td>Interactive mission-control replay, failure scenarios, bilingual</td></tr>
+      <tr><td>Nominal, numerically verified</td><td>one plan per event, no errors, verified incl. J2</td><td>safe <bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi> · recovered <bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></td></tr>
+      <tr><td>Avoidance under uncertainty</td><td>camera + execution errors, 3σ margin</td><td>typical camera <bdi dir="ltr" data-v="uncertainty_headline.typical_3sigma.safe_rate" data-fmt="pct"></bdi> · tracking failure in every draw <bdi dir="ltr" data-v="uncertainty_headline.failure_3sigma.safe_rate" data-fmt="pct"></bdi></td></tr>
+      <tr><td>Recovery under uncertainty</td><td>execution + navigation errors</td><td>open loop <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> → closed loop <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.recovered_rate" data-fmt="pct"></bdi></td></tr>
+      <tr><td><strong>Integrated end-to-end</strong></td><td>all of the above in the same draw</td><td><strong>safe AND recovered <bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_rate" data-fmt="pct"></bdi></strong></td></tr>
     </tbody></table></div>
+  <figure><img src="../assets/figures/e2e_levels.png" alt="Four levels of evidence: nominal, avoidance under uncertainty, recovery under uncertainty, integrated test" loading="lazy"><figcaption>From nominal plans (no errors) to the integrated end-to-end test with all errors in the same draw.</figcaption></figure>
 </div></section>
 
 <section class="content" id="limits"><div class="wrap">
@@ -196,7 +247,8 @@
     <li><strong>Camera:</strong> images are synthetic, so there is a sim-to-real gap. One camera measures direction, not reliable range; range from apparent size is exploratory only. The visual sequence is slower and closer than a real 12 km/s encounter.</li>
     <li><strong>Dynamics:</strong> planning uses Clohessy–Wiltshire (circular orbit). Verification includes J2 but not drag or solar pressure. Pc is computed with a 2D short-encounter approximation.</li>
     <li><strong>Thresholds:</strong> the 1 km / 10⁻⁶ safety rule and the 50 m / 1 mm/s recovery tolerance are experimental design values, not agency requirements.</li>
-    <li><strong>Monte Carlo:</strong> uses the analytical model as truth. Model error is handled separately by the numerical verification step. The safety margin covers perception error only, so cheapest plans can still fail under burn execution error (a margin for execution error is future work).</li>
+    <li><strong>Monte Carlo:</strong> propagates with the analytical Clohessy–Wiltshire model (it is not a J2 simulation); J2 was verified for the nominal plans. The safety margin covers perception error only, so cheapest plans can still fail under burn execution error (a margin for execution error is future work).</li>
+    <li><strong>Tracking failure</strong> is the weakest link: when the tracker locks onto a false detection, the avoidance plan is built on a wrong direction. A real system needs automatic track-quality checks.</li>
     <li>No real satellite was manoeuvred, and this is not flight software.</li>
   </ul>
 </div></section>

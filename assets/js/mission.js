@@ -195,6 +195,11 @@
     shown.forEach(function (c, i) { var x = X(c.t_tca_d), y = Y(c.risk); if (i) g.lineTo(x, y); else g.moveTo(x, y); }); g.stroke();
     shown.forEach(function (c, i) { g.fillStyle = i === shown.length - 1 ? "#fff" : COL.accent; g.beginPath(); g.arc(X(c.t_tca_d), Y(c.risk), 3, 0, 7); g.fill(); });
     var after = s.idx >= st.chapters.findIndex(function (c) { return c.id === "predict"; });
+    var atDec = cd.filter(function (c) { return c.t_tca_d >= 2 - 1e-9; });
+    if (after && atDec.length && s.ch.id !== "cdms" && s.ch.id !== "identify") {
+      var cdec = atDec[atDec.length - 1];
+      g.strokeStyle = "#ffffff"; g.lineWidth = 2; g.beginPath(); g.arc(X(cdec.t_tca_d), Y(cdec.risk), 6.5, 0, 7); g.stroke(); g.lineWidth = 1;
+    }
     if (after && s.ch.id !== "cdms" && s.ch.id !== "identify") {
       var p = sc.prediction, pr = p.triggered ? p.predicted_risk : -6.6;
       g.fillStyle = p.triggered ? COL.warn : COL.muted; g.beginPath(); g.moveTo(X(0.15), Y(pr) - 6); g.lineTo(X(0.15) + 6, Y(pr)); g.lineTo(X(0.15), Y(pr) + 6); g.lineTo(X(0.15) - 6, Y(pr)); g.fill();
@@ -279,7 +284,7 @@
     for (var d2 = 0; d2 <= dmax; d2 += ds) { txt(g, fmt(d2, ds < 1 ? 1 : 0) + " km", L - 4, Y(d2) + 3, COL.faint, 9, "right"); }
     txt(g, cvt("tl"), w - R, h - 2, COL.faint, 9, "right");
     g.strokeStyle = COL.nominal; g.lineWidth = 2; g.beginPath(); g.moveTo(L, Y(0)); g.lineTo(w - R, Y(0)); g.stroke();
-    txt(g, cvt("nominal"), L + 6, Y(0) - 6, COL.nominal, 10);
+    txt(g, cvt("nominal"), X(0) + 8, Y(0) - 6, COL.nominal, 10);  // right of TCA: clear of the burn-1 label
     function curve(trj, col, dash, upto, width) {
       g.strokeStyle = col; g.lineWidth = width || 1.6; g.setLineDash(dash || []); g.beginPath(); var on = false;
       for (var i = 0; i < trj.t_h.length; i++) { if (trj.t_h[i] > (upto === undefined ? 1e9 : upto) || trj.t_h[i] > t1) break; var x = X(trj.t_h[i]), y = Y(dist(trj, i)); if (on) g.lineTo(x, y); else { g.moveTo(x, y); on = true; } }
@@ -457,7 +462,9 @@
     }
     if (st.view === "rel" && !v) st.view = "earth";
     document.querySelectorAll(".view-tabs button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.dataset.view === st.view)); });
-    $("rel-legend").style.display = st.view === "rel" ? "" : "none";
+    ["earth", "rel", "enc"].forEach(function (k) { ["-legend", "-legend-note"].forEach(function (suf) { var el = $(k + suf); if (el) el.style.display = st.view === k ? "" : "none"; }); });
+    var ce = $("mc-compress");
+    if (ce) ce.innerHTML = v ? (v.closed_loop ? S.compress_rec_cl : S.compress_rec).replace("{h}", B.ltrValue(v.rec_end_h, "h", 0)) : S.compress;
     drawRisk(s);
     if (st.view === "earth") drawEarth(s); else if (st.view === "rel") drawRelative(s, v); else drawEncounter(s, v);
     drawCamera(s);

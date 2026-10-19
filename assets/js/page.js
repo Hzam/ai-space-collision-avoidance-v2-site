@@ -1,4 +1,4 @@
-/* Static-page binding: every number on the page comes from assets/data/v2_results.json (the public, sanitized copy
+/* Static-page binding: every number on the page comes from assets/data/results.json (the public, sanitized copy
    of final_results_v2.json). Elements: <bdi dir="ltr" data-v="path.to.value" data-fmt="3|pct|e|int" data-unit="cm/s"
    data-scale="100">. English and Arabic pages read the same file. */
 (function () {
@@ -36,7 +36,7 @@
         var name = (T.exp_names[r.experiment_id] || r.experiment_id);
         function n(x, d) { return '<td class="n">' + B.ltrToken(B.fmtNum(x, d), "num") + "</td>"; }
         return '<tr class="' + cls + '"><td>' + B.ltrToken(r.experiment_id.split("_")[0]) + " " + name + "</td>" +
-          n(r.val_L_nested, 3) + n(r.val_L_nested_std, 3) + n(r.test_L, 3) +
+          n(r.val_L_nested, 3) + n(r.val_L_nested_std, 3) + n(r.test_L, 4) +
           '<td class="n">' + B.ltrToken("[" + B.fmtNum(r.test_L_ci95[0], 3) + ", " + B.fmtNum(r.test_L_ci95[1], 3) + "]", "num") + "</td>" +
           n(r.test_F2, 3) + n(r.test_MSE_HR, 3) + n(r.test_PR_AUC, 3) + n(r.test_precision, 3) + n(r.test_recall, 3) +
           '<td class="n">' + B.ltrToken(r.TP + " / " + r.FP + " / " + r.FN, "num") + "</td></tr>";
@@ -61,6 +61,6 @@
     }
     document.documentElement.setAttribute("data-bound", "1");
   }
-  fetch(ROOT + "assets/data/v2_results.json").then(function (r) { return r.json(); }).then(function (d) { window.__results = d; bind(d); })
+  fetch(ROOT + "assets/data/results.json").then(function (r) { return r.json(); }).then(function (d) { window.__results = d; bind(d); })
     .catch(function (e) { console.error(e); });
 })();

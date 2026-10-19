@@ -5,7 +5,7 @@
   "outcome": "TP",
   "has_maneuver": true,
   "camera": "typical",
-  "selection_rule": "true-positive V2 trigger needing a manoeuvre with the most input CDMs (V1 rule)"
+  "selection_rule": "true-positive trigger needing a manoeuvre with the most input CDMs"
  },
  {
   "id": "rescued",
@@ -13,7 +13,7 @@
   "outcome": "TP",
   "has_maneuver": true,
   "camera": "typical",
-  "selection_rule": "first test event promoted by the V2 ML guard that was truly high-risk"
+  "selection_rule": "first test event promoted by the ML guard that was truly high-risk"
  },
  {
   "id": "false_alarm",
@@ -29,7 +29,7 @@
   "outcome": "FN",
   "has_maneuver": false,
   "camera": null,
-  "selection_rule": "V1 missed-event demo (high-risk event not triggered), kept for continuity"
+  "selection_rule": "missed-event example (high-risk event not triggered)"
  },
  {
   "id": "quiet",
@@ -37,7 +37,7 @@
   "outcome": "TN",
   "has_maneuver": false,
   "camera": null,
-  "selection_rule": "V1 true-negative demo event (low risk, no trigger)"
+  "selection_rule": "true-negative example (low risk, no trigger)"
  },
  {
   "id": "difficult",

@@ -9,6 +9,7 @@
   function m(x) { return V(x, "m", 0); }
 
   var EN = {
+    compress: "Time-compressed mission replay", compress_rec: "Time-compressed mission replay — recovery completes about {h} after TCA", compress_rec_cl: "Time-compressed mission replay — recovery, including the final trim, completes about {h} after TCA",
     run: "RUN MISSION", play: "Play", pause: "Pause", restart: "Restart", speed: "Speed", mode_auto: "Autoplay",
     mode_explore: "Explore", scenario: "Scenario", perception: "Perception", margin: "Safety margin",
     risk_panel: "ESA risk data", orbit_panel: "Orbit scene", camera_panel: "Onboard RGB camera",
@@ -22,14 +23,14 @@
     st_restored: "NOMINAL TRAJECTORY RECOVERED WITHIN TOLERANCE", st_resid: "RECOVERY RESIDUAL", st_missed: "MISSED HIGH-RISK EVENT",
     st_quiet: "NO ACTION NEEDED",
     yes: "yes", no: "no", nominal: "nominal (phantom) satellite", threat: "debris / threat", avoid_only: "avoidance only",
-    two_imp: "2-impulse (phase offset)", selected: "selected 3-impulse plan", tca: "TCA",
+    two_imp: "single return burn (phase offset remains)", selected: "selected: avoid + recover", tca: "TCA",
     without: "WITHOUT MANOEUVRE", with_: "WITH SELECTED MANOEUVRE", safety_circle: "1 km safety distance",
     sum_title: "Mission result", dv_total: "Total Δv", dv_avoid: "Avoidance Δv", dv_rec: "Recovery Δv",
     rec_dur: "Recovery completed", resid_r: "Final position error", resid_v: "Final velocity error", miss_after: "Miss distance at TCA",
     pc_after: "Collision probability at TCA", tca_safe: "Safe passage at TCA", not_safe: "NOT SAFE (miss < 1 km or Pc > 10⁻⁶)", status: "Recovery status", safe_rate: "Monte Carlo safe rate",
     rec_rate: "Monte Carlo recovery rate", mc_note: "Safe rate: {n} Monte Carlo draws with camera, execution and navigation errors. Recovery rate: 300 draws with the closed-loop recovery guidance (orbit-determination navigation, 3 small drift corrections + final trim). The trajectory shown is one representative (median-Δv) draw.",
     nominal_note: "Final numbers: two-body + J2 integration after differential correction. Trajectory drawn with the Clohessy–Wiltshire model.",
-    sc: { success: "Successful avoidance + recovery (true alert)", rescued: "Alert added by V2 ML guard (true)", false_alarm: "False alarm (manoeuvre not needed)",
+    sc: { success: "Successful avoidance + recovery (true alert)", rescued: "Alert added by the ML guard (true)", false_alarm: "False alarm (manoeuvre not needed)",
           missed: "Missed high-risk event (failure)", quiet: "True negative (no action)", difficult: "Difficult recovery (numerically repaired)" },
     pc: { perfect: "Perfect state", typical: "Typical camera error", failure: "Including tracking failures" },
     real_sim: "REAL: ESA CDMs, geometry · SIMULATED: camera, manoeuvre, recovery",
@@ -57,6 +58,7 @@
   };
 
   var AR = {
+    compress: "عرض مضغوط زمنيًا للمهمة", compress_rec: "عرض مضغوط زمنيًا للمهمة — تكتمل العودة بعد نحو {h} من " + T("TCA"), compress_rec_cl: "عرض مضغوط زمنيًا للمهمة — تكتمل العودة مع التصحيح الأخير بعد نحو {h} من " + T("TCA"),
     run: "تشغيل المهمة", play: "تشغيل", pause: "إيقاف مؤقت", restart: "إعادة", speed: "السرعة", mode_auto: "عرض تلقائي",
     mode_explore: "استكشاف", scenario: "السيناريو", perception: "الرصد", margin: "هامش الأمان",
     risk_panel: "بيانات الخطر من وكالة الفضاء الأوروبية", orbit_panel: "المشهد المداري", camera_panel: "الكاميرا الملونة على متن القمر",
@@ -70,14 +72,14 @@
     st_restored: "استُعيد المسار الاسمي ضمن حد التسامح", st_resid: "الخطأ المتبقي بعد الاستعادة", st_missed: "حدث خطر لم يُكتشف",
     st_quiet: "لا حاجة لإجراء",
     yes: "نعم", no: "لا", nominal: "القمر الاسمي (المرجعي)", threat: "الحطام / التهديد", avoid_only: "تجنب فقط",
-    two_imp: "دفعتان (يبقى فرق طوري)", selected: "خطة الدفعات الثلاث المختارة", tca: T("TCA"),
+    two_imp: "دفعة عودة واحدة (يبقى فرق طوري)", selected: "المختارة: تجنب ثم عودة", tca: T("TCA"),
     without: "بدون مناورة", with_: "مع المناورة المختارة", safety_circle: "مسافة الأمان " + V(1, "km", 0),
     sum_title: "نتيجة المهمة", dv_total: "إجمالي " + T("Δv"), dv_avoid: T("Δv") + " التجنب", dv_rec: T("Δv") + " الاستعادة",
     rec_dur: "اكتمال الاستعادة", resid_r: "خطأ الموضع النهائي", resid_v: "خطأ السرعة النهائي", miss_after: "مسافة المرور عند " + T("TCA"),
     pc_after: "احتمال التصادم عند " + T("TCA"), tca_safe: "عبور آمن عند " + T("TCA"), not_safe: "غير آمن (المسافة " + T("< 1 km") + " أو " + T("Pc > 10⁻⁶") + ")", status: "حالة الاستعادة", safe_rate: "نسبة الأمان " + T("(Monte Carlo)"),
     rec_rate: "نسبة الاستعادة " + T("(Monte Carlo)"), mc_note: "نسبة الأمان من {n} محاولة " + T("Monte Carlo") + " بأخطاء الكاميرا والتنفيذ والملاحة، ونسبة الاستعادة من " + T("300") + " محاولة بتوجيه استعادة مغلق الحلقة (ملاحة بتحديد المدار، وثلاثة تصحيحات صغيرة للانجراف، وتصحيح أخير). المسار المعروض محاولة تمثيلية واحدة (الوسيط في " + T("Δv") + ").",
     nominal_note: "الأرقام النهائية من تكامل عددي " + T("(two-body + J2)") + " بعد التصحيح التفاضلي، والمسار مرسوم بنموذج " + T("Clohessy–Wiltshire") + ".",
-    sc: { success: "تجنب واستعادة ناجحان (تنبيه صحيح)", rescued: "تنبيه أضافه حارس التعلم الآلي في الإصدار الثاني (صحيح)", false_alarm: "إنذار كاذب (لم تكن المناورة لازمة)",
+    sc: { success: "تجنب واستعادة ناجحان (تنبيه صحيح)", rescued: "تنبيه أضافه حارس التعلم الآلي (صحيح)", false_alarm: "إنذار كاذب (لم تكن المناورة لازمة)",
           missed: "حدث خطر لم يُكتشف (إخفاق)", quiet: "سلبي صحيح (لا إجراء)", difficult: "استعادة صعبة (صُحِّحت عدديًا)" },
     pc: { perfect: "حالة مثالية", typical: "خطأ الكاميرا المعتاد", failure: "مع حالات فشل التتبع" },
     real_sim: "حقيقي: رسائل " + T("ESA CDM") + " والهندسة · مُحاكى: الكاميرا والمناورة والاستعادة",

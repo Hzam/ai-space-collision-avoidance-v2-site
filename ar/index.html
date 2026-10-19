@@ -34,6 +34,7 @@
   <div class="mc-top">
     <span class="mc-title">غرفة التحكم: إعادة عرض المهمة</span>
     <span class="mc-clock" id="mc-clock"><bdi dir="ltr">T−0.0 h</bdi></span>
+    <span class="mc-compress" id="mc-compress">عرض مضغوط زمنيًا للمهمة</span>
     <span class="status monitor" id="mc-status">مراقبة</span>
     <span class="spacer"></span>
     <button class="btn" id="btn-auto" aria-pressed="true">عرض تلقائي</button>
@@ -43,6 +44,14 @@
     <div class="panel left">
       <h3>بيانات الخطر من <bdi dir="ltr" class="ltr">ESA</bdi> <span class="badge real">حقيقي</span></h3>
       <canvas id="risk-cv" aria-label="الخطر المُبلَّغ مقابل الوقت حتى أقرب اقتراب"></canvas>
+      <div class="legend2" id="risk-legend">
+        <span class="c-acc"><i class="sw"></i><span class="lbl">الخطر المُبلَّغ، نقطة لكل رسالة <bdi dir="ltr" class="ltr">CDM</bdi></span></span>
+        <span class="c-white"><i class="sw ring"></i><span class="lbl">آخر خطر متاح وقت القرار</span></span>
+        <span class="c-warn"><i class="sw diamond"></i><span class="lbl">مخرج النموذج: تنبيه (الرمادي: لا تنبيه، أقل من <bdi dir="ltr" class="ltr">−6</bdi>)</span></span>
+        <span class="c-bad"><i class="sw star"></i><span class="lbl">الخطر النهائي من <bdi dir="ltr" class="ltr">ESA</bdi> (الحقيقة المرجعية، يظهر في النهاية)</span></span>
+        <span class="c-bad"><i class="sw dash"></i><span class="lbl">عتبة الخطر المرتفع <bdi dir="ltr" class="ltr">log10 Pc = −6</bdi></span></span>
+        <span class="c-faint"><i class="sw dot2"></i><span class="lbl">نقطة القرار: قبل <bdi dir="ltr" class="ltr">TCA</bdi> بيومين</span></span>
+      </div>
       <div class="readouts">
         <div class="ro"><div class="k">الوقت حتى <bdi dir="ltr" class="ltr">TCA</bdi></div><div class="v" id="ro-ttca">—</div></div>
         <div class="ro"><div class="k">عدد رسائل <bdi dir="ltr" class="ltr">CDM</bdi></div><div class="v" id="ro-ncdm">—</div></div>
@@ -62,7 +71,27 @@
         <label style="font-size:12.5px;color:var(--muted);display:inline-flex;gap:5px;align-items:center"><input type="checkbox" id="view-auto" checked> تلقائي</label>
       </div>
       <canvas id="orbit-cv" aria-label="رسم متحرك للمدار والمناورة"></canvas>
-      <div class="legend" id="rel-legend"><span class="lg-nominal">القمر الاسمي (المرجعي)</span><span class="lg-avoid">تجنب فقط</span><span class="lg-twoimp">دفعتان (يبقى فرق طوري)</span><span class="lg-recover">خطة الدفعات الثلاث المختارة</span><span class="lg-threat">لحظة <bdi dir="ltr" class="ltr">TCA</bdi> / الحطام</span></div>
+      <div class="legend2" id="earth-legend">
+        <span class="c-nom"><i class="sw"></i><span class="lbl">المدار الاسمي (المرجعي)</span></span>
+        <span class="c-white"><i class="sw dot"></i><span class="lbl">مركبتنا</span></span>
+        <span class="c-thr"><i class="sw dash"></i><span class="lbl">مدار التهديد (الحطام)</span></span>
+        <span class="c-thr"><i class="sw dot"></i><span class="lbl">الحطام / الجسم</span></span>
+        <span class="c-warn"><i class="sw ring"></i><span class="lbl">نقطة أقرب اقتراب <bdi dir="ltr" class="ltr">(TCA)</bdi></span></span>
+      </div>
+      <p class="view-note" id="earth-legend-note">تُزيح المناورة المركبة أمتارًا إلى كيلومترات فقط، وهذا أصغر بكثير من أن يُرى بمقياس الأرض (نصف قطرها <bdi dir="ltr" class="ltr">6,371 km</bdi>). لذلك يعرض منظر <b>«البعد عن المسار الاسمي»</b> الانحراف بالتفصيل.</p>
+      <div class="legend2" id="rel-legend">
+        <span class="c-nom"><i class="sw"></i><span class="lbl">المسار الاسمي المرجعي (البعد صفر)</span></span>
+        <span class="c-rec"><i class="sw"></i><span class="lbl">المسار المختار: تجنب ثم عودة</span></span>
+        <span class="c-avoid"><i class="sw dash"></i><span class="lbl">تجنب فقط (دون عودة)</span></span>
+        <span class="c-two"><i class="sw dot2"></i><span class="lbl">دفعة عودة واحدة (يبقى فرق طوري)</span></span>
+        <span class="c-avoid"><i class="sw dot"></i><span class="lbl">الدفعة 1 (التجنب)</span></span>
+        <span class="c-rec"><i class="sw dot"></i><span class="lbl">دفعات العودة والتصحيحات الصغيرة</span></span>
+        <span class="c-thr"><i class="sw dash"></i><span class="lbl">لحظة <bdi dir="ltr" class="ltr">TCA</bdi> (مرور الحطام)</span></span>
+        <span class="c-white"><i class="sw dot"></i><span class="lbl">موقع مركبتنا الآن</span></span>
+      </div>
+      <div class="legend2" id="enc-legend">
+        <span class="c-muted"><span class="lbl">مستوى الاقتراب عند <bdi dir="ltr" class="ltr">TCA</bdi>: مركبتنا في المركز، والدائرة مسافة الأمان <bdi dir="ltr" class="ltr">1 km</bdi>، والقطوع الناقصة عدم اليقين في الموقع، والنقطتان موضع مرور الحطام دون المناورة ومعها.</span></span>
+      </div>
     </div>
     <div class="panel right">
       <h3>الكاميرا الملونة <bdi dir="ltr" class="ltr">(RGB)</bdi> على متن القمر <span class="badge sim">مُحاكى</span></h3>
@@ -109,9 +138,9 @@
     <div class="st"><h4>1 · التنبؤ <span class="badge real">حقيقي</span></h4><p>من تاريخ رسائل <bdi dir="ltr" class="ltr">CDM</bdi> المتاحة قبل <bdi dir="ltr" class="ltr">TCA</bdi> بيومين، نحتفظ بآخر خطر مُبلَّغ بوصفه خط أساس قويًا، ويضيف نموذج صغير <bdi dir="ltr" class="ltr">(ExtraTrees)</bdi> تنبيهًا للحالات الحدّية (<em>هجين محروس</em>).</p></div>
     <div class="st"><h4>2 · الرصد <span class="badge sim">مُحاكى</span></h4><p>يوجّه التنبيه كاميرا ملونة مُحاكاة على متن القمر نحو التهديد. يكتشف كاشف <bdi dir="ltr" class="ltr">YOLO</bdi> المدرَّب الجسم، ويقيس متتبِّع <bdi dir="ltr" class="ltr">Kalman</bdi> اتجاهه ومعدله الزاوي. كاميرا واحدة تعطي الاتجاه، لا المسافة بموثوقية.</p></div>
     <div class="st"><h4>3 · التجنب <span class="badge sim">مُحاكى</span></h4><p>تُختبر <bdi dir="ltr" class="ltr num">1,830</bdi> دفعة مرشحة على الهندسة الحقيقية للاقتراب، ويُختار أرخص حل يحقق مسافة مرور <bdi dir="ltr" class="ltr">≥ 1 km</bdi> واحتمال تصادم <bdi dir="ltr" class="ltr">Pc ≤ 10⁻⁶</bdi>، ثم يُتحقق منه بتكامل مداري عددي يشمل أثر <bdi dir="ltr" class="ltr">J2</bdi>.</p></div>
-    <div class="st"><h4>4 · الاستعادة <span class="badge sim">مُحاكى</span></h4><p>بعد مرور الحطام، تعيد دفعتان إضافيتان القمر إلى الموقع الذي كان سيشغله لولا المناورة (عودة طورية)، ضمن <bdi dir="ltr" class="ltr">50 m</bdi> و<bdi dir="ltr" class="ltr">1 mm/s</bdi>.</p></div>
+    <div class="st"><h4>4 · الاستعادة <span class="badge sim">مُحاكى</span></h4><p>بعد مرور الحطام، تعيد دفعتان رئيسيتان القمر إلى الموقع الذي كان سيشغله لولا المناورة (عودة طورية)، ضمن <bdi dir="ltr" class="ltr">50 m</bdi> و<bdi dir="ltr" class="ltr">1 mm/s</bdi>. ومع الأخطاء الواقعية تُبقي دفعات تصحيح صغيرة مغلقة الحلقة العودةَ على هدفها.</p></div>
   </div>
-  <p>تتبع بنية المناورة تصاميم منشورة للتجنب ثم العودة (ثلاث دفعات: دفعة تجنب ودفعتا عودة)، وكذلك عائلات نماذج التنبؤ التي اختبرناها منشورة. <strong>إسهام المشروع هو دمج هذه المكونات وتقييمها بأمانة في سلسلة واحدة متكاملة، بما في ذلك أثر خطأ الرصد المَقيس وخطأ تنفيذ الدفعات على الأمان والاستعادة معًا.</strong></p>
+  <p>تتبع بنية المناورة تصاميم منشورة للتجنب ثم العودة (ثلاث دفعات رئيسية: دفعة تجنب ودفعتا عودة)، وكذلك عائلات نماذج التنبؤ التي اختبرناها منشورة. <strong>إسهام المشروع هو دمج هذه المكونات وتقييمها بأمانة في سلسلة واحدة متكاملة، بما في ذلك أثر خطأ الرصد المَقيس وخطأ تنفيذ الدفعات على الأمان والاستعادة معًا.</strong></p>
 </div></section>
 
 <section class="content" id="real"><div class="wrap">
@@ -133,62 +162,85 @@
   <h3>التنبؤ بخطر التصادم <span class="badge real">حقيقي</span></h3>
   <div class="cards">
     <div class="card"><div class="lbl">الدرجة الرسمية لـ <bdi dir="ltr" class="ltr">ESA</bdi>: خط الأساس (آخر خطر) على الاختبار</div><div class="big"><bdi dir="ltr" data-v="prediction.baseline.test.L" data-fmt="3"></bdi></div><div class="sub">تطابق القيمة المنشورة <bdi dir="ltr" class="ltr num">0.694</bdi> · الأقل أفضل</div></div>
-    <div class="card"><div class="lbl">النموذج المختار في الإصدار الثاني: الهجين المحروس (اختبار)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="3"></bdi></div><div class="sub">أفضل من خط الأساس بـ <bdi dir="ltr" data-v="prediction.selected.test.improvement_vs_LRP_pct" data-fmt="1" data-unit="%"></bdi>، لكن الفرق ليس ذا دلالة إحصائية</div></div>
+    <div class="card"><div class="lbl">النموذج المختار: الهجين المحروس (اختبار)</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="4"></bdi></div><div class="sub">أفضل من خط الأساس بـ <bdi dir="ltr" data-v="prediction.selected.test.improvement_vs_LRP_pct" data-fmt="1" data-unit="%"></bdi>، لكن الفرق ليس ذا دلالة إحصائية</div></div>
     <div class="card"><div class="lbl"><bdi dir="ltr" class="ltr">F2</bdi> للنموذج المختار</div><div class="big"><bdi dir="ltr" data-v="prediction.selected.test.F2" data-fmt="3"></bdi></div><div class="sub">خط الأساس <bdi dir="ltr" data-v="prediction.baseline.test.F2" data-fmt="3"></bdi></div></div>
     <div class="card"><div class="lbl">أحداث اختبار غيّرها حارس التعلم الآلي</div><div class="big"><bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_events" data-fmt="int"></bdi></div><div class="sub"><bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_true_high" data-fmt="int"></bdi> منها خطر مرتفع فعلًا · <bdi dir="ltr" data-v="prediction.promotion_on_test.promoted_false_alarm" data-fmt="int"></bdi> إنذارات كاذبة</div></div>
   </div>
+  <p>الطريقة المختارة هي <strong>خط الأساس <bdi dir="ltr" class="ltr">Latest Risk</bdi> مع آلية تنبيه محروسة تعتمد على <bdi dir="ltr" class="ltr">ExtraTrees</bdi></strong>: لا تُلغي أي تنبيه من خط الأساس ولا تخفّضه، بل تضيف تنبيهًا لحدث حدّي فقط. وهي ليست نموذجًا جديدًا يتنبأ بقيمة خطر مستمرة؛ فقد اختُبرت نماذج القيمة المستمرة ولم تُختر.</p>
   <p>اختبرنا <bdi dir="ltr" data-v="prediction.experiments.length" data-fmt="int"></bdi> تجربة مُجمَّدة: خط الأساس (آخر خطر)، ومصنِّفات، ونموذجًا على مرحلتين (مصنِّف ← انحدار)، ونماذج هجينة محروسة، وانحدارًا مباشرًا للخطر، وسلسلة قواعد عتبات أُعيد ضبطها، وشبكة زمنية <bdi dir="ltr" class="ltr">(GRU)</bdi> دُرِّبت على معالج رسومي. طُوِّرت كل تجربة بتحقق متقاطع على مستوى الحدث من ملف التدريب فقط، ثم جُمِّدت إعداداتها وقُيِّمت <strong>مرة واحدة</strong> على مجموعة الاختبار الرسمية. اختير النموذج بناءً على التحقق، لا على الاختبار.</p>
   <div class="callout"><p><strong>نتيجة أمينة:</strong> آخر خطر مُبلَّغ يصعب التفوق عليه، تمامًا كما في مسابقة <bdi dir="ltr" class="ltr">ESA</bdi> الأصلية. يحقق الهجين المحروس المختار تحسنًا صغيرًا (فترة الثقة <bdi dir="ltr" class="ltr num">95%</bdi> للتغير في الدرجة: من <bdi dir="ltr" class="ltr num" data-v="prediction.selected.test.delta_L_vs_LRP_ci95.0" data-fmt="3"></bdi> إلى <bdi dir="ltr" class="ltr num" data-v="prediction.selected.test.delta_L_vs_LRP_ci95.1" data-fmt="3"></bdi>). أما نماذج المرحلتين والانحدار المباشر و<bdi dir="ltr" class="ltr">GRU</bdi> فكانت أسوأ من خط الأساس في التحقق والاختبار.</p></div>
+
+  <h4>المقارنة بالنتائج المنشورة (مجموعة الاختبار الرسمية؛ الأقل أفضل في <bdi dir="ltr" class="ltr">L</bdi>)</h4>
+  <div class="table-wrap"><table>
+    <thead><tr><th>الطريقة / الفريق</th><th>النشر</th><th>الفكرة</th><th><bdi dir="ltr" class="ltr">L</bdi></th><th><bdi dir="ltr" class="ltr">F2</bdi></th><th><bdi dir="ltr" class="ltr">MSE_HR</bdi></th><th>العلاقة بطريقتنا</th></tr></thead>
+    <tbody>
+      <tr><td>خط الأساس <bdi dir="ltr" class="ltr">Latest Risk</bdi></td><td><bdi dir="ltr" class="ltr">Uriot et al. 2022</bdi></td><td>الخطر النهائي هو آخر خطر مُبلَّغ</td><td><bdi dir="ltr" class="ltr num">0.694</bdi></td><td><bdi dir="ltr" class="ltr num">0.739</bdi></td><td><bdi dir="ltr" class="ltr num">0.513</bdi></td><td>خط الأساس والحارس عندنا</td></tr>
+      <tr><td><bdi dir="ltr" class="ltr">sesc</bdi> (الأول)</td><td><bdi dir="ltr" class="ltr">Uriot et al. 2022</bdi></td><td>قواعد عتبات يدوية؛ مع تجربة على لوحة الاختبار</td><td><bdi dir="ltr" class="ltr num">0.556</bdi></td><td><bdi dir="ltr" class="ltr num">0.733</bdi></td><td><bdi dir="ltr" class="ltr num">0.407</bdi></td><td>عند إعادة ضبطه دون لوحة الاختبار أفرط في التعلم</td></tr>
+      <tr><td><bdi dir="ltr" class="ltr">Magpies</bdi> (الثالث)</td><td><bdi dir="ltr" class="ltr">Uriot et al. 2022</bdi></td><td>شبكة <bdi dir="ltr" class="ltr">LSTM</bdi> ترصد الأحداث منخفضة الخطر التي تصبح خطِرة</td><td><bdi dir="ltr" class="ltr num">0.585</bdi></td><td><bdi dir="ltr" class="ltr num">0.753</bdi></td><td><bdi dir="ltr" class="ltr num">0.441</bdi></td><td>أقرب فكرة لطريقتنا</td></tr>
+      <tr><td><bdi dir="ltr" class="ltr">DunderMifflin / KP Labs</bdi> (السابع)</td><td><bdi dir="ltr" class="ltr">Tulczyjew et al. 2021</bdi></td><td>مرحلتان: مصنِّف ثم انحدار للأحداث الخطِرة</td><td><bdi dir="ltr" class="ltr num">0.628</bdi></td><td><bdi dir="ltr" class="ltr num">0.718</bdi></td><td><bdi dir="ltr" class="ltr num">0.451</bdi></td><td>أعدنا اختباره ببروتوكولنا فكان أسوأ من خط الأساس</td></tr>
+      <tr><td>نموذج <bdi dir="ltr" class="ltr">LightGBM</bdi> للمنظمين (بعد المسابقة)</td><td><bdi dir="ltr" class="ltr">Uriot et al. 2022</bdi></td><td>انحدار يصحح آخر خطر</td><td><bdi dir="ltr" class="ltr num">0.684</bdi></td><td>غير منشور</td><td>غير منشور</td><td>نتيجتنا قريبة منه</td></tr>
+      <tr><td><strong>هذا المشروع: الهجين المحروس</strong></td><td><bdi dir="ltr" class="ltr num">2026</bdi></td><td>خط الأساس + تنبيه محروس بـ <bdi dir="ltr" class="ltr">ExtraTrees</bdi>؛ اختير على التحقق</td><td><strong><bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="4"></bdi></strong></td><td><bdi dir="ltr" data-v="prediction.selected.test.F2" data-fmt="3"></bdi></td><td><bdi dir="ltr" data-v="prediction.selected.test.MSE_HR" data-fmt="3"></bdi></td><td>أفضل قليلًا من خط الأساس، وخلف أفضل الفرق</td></tr>
+    </tbody></table></div>
+  <p>أُقيمت المسابقة عام <bdi dir="ltr" class="ltr num">2019</bdi>، والسنوات أعلاه سنوات نشر الأوراق. أثناء المسابقة كانت الفرق ترى نتائج جزء من الاختبار، أما طريقتنا فاختيرت على التحقق داخل ملف التدريب فقط. <strong>نتيجتنا ليست الأفضل عالميًا.</strong></p>
   <div class="table-wrap"><table id="exp-table"></table></div>
   <div class="figs">
-    <figure><img src="../assets/figures/v2_pred_official_score.png" alt="الدرجة الرسمية لكل تجربة" loading="lazy"><figcaption>الدرجة الرسمية على الاختبار (يسار) والتحقق (يمين). ★ تعني النموذج المختار بناءً على التحقق.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_f2_msehr.png" alt="F2 وMSE_HR لكل تجربة" loading="lazy"><figcaption>جزءا الدرجة الرسمية.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_pr_curves.png" alt="منحنيات الدقة والاستدعاء" loading="lazy"><figcaption>الدقة والاستدعاء على مجموعة الاختبار الرسمية.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_temporal_examples.png" alt="أمثلة على الأحداث التي رُفع تنبيهها" loading="lazy"><figcaption>تاريخ رسائل حقيقي: حدث أنقذه الحارس بحق، وإنذار كاذب أضافه.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_regression_high_risk.png" alt="الخطر المتوقع مقابل الحقيقي" loading="lazy"><figcaption>الخطر النهائي المتوقع مقابل الحقيقي لأحداث الخطر المرتفع في الاختبار.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_pred_val_vs_test.png" alt="التحقق مقابل الاختبار" loading="lazy"><figcaption>الارتباط بين درجتي التحقق والاختبار ضعيف، كما ذكر منظمو المسابقة.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_official_score.png" alt="الدرجة الرسمية لكل تجربة" loading="lazy"><figcaption>الدرجة الرسمية على الاختبار (يسار) والتحقق (يمين). ★ تعني النموذج المختار بناءً على التحقق.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_f2_msehr.png" alt="F2 وMSE_HR لكل تجربة" loading="lazy"><figcaption>جزءا الدرجة الرسمية.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_pr_curves.png" alt="منحنيات الدقة والاستدعاء" loading="lazy"><figcaption>الدقة والاستدعاء على مجموعة الاختبار الرسمية.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_temporal_examples.png" alt="أمثلة على الأحداث التي رُفع تنبيهها" loading="lazy"><figcaption>تاريخ رسائل حقيقي: حدث أنقذه الحارس بحق، وإنذار كاذب أضافه.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_regression_high_risk.png" alt="الخطر المتوقع مقابل الحقيقي" loading="lazy"><figcaption>الخطر النهائي المتوقع مقابل الحقيقي لأحداث الخطر المرتفع في الاختبار.</figcaption></figure>
+    <figure><img src="../assets/figures/pred_val_vs_test.png" alt="التحقق مقابل الاختبار" loading="lazy"><figcaption>الارتباط بين درجتي التحقق والاختبار ضعيف، كما ذكر منظمو المسابقة.</figcaption></figure>
   </div>
 
   <h3>مناورة التجنب والاستعادة <span class="badge sim">مُحاكى</span> على هندسة <span class="badge real">حقيقية</span></h3>
+  <p><strong>الخطط الاسمية المتحقق منها عدديًا</strong> (خطة واحدة لكل حدث، دون أخطاء). نسب <bdi dir="ltr" class="ltr">100%</bdi> أدناه تخص هذه الخطط الاسمية فقط، ونتائج الأخطاء الواقعية في القسم التالي.</p>
   <div class="cards">
     <div class="card"><div class="lbl">أحداث خُطِّطت لها مناورة (تنبيهات احتاجت مناورة)</div><div class="big"><bdi dir="ltr" data-v="maneuver.n_planned" data-fmt="int"></bdi></div><div class="sub">جميعها ممكنة</div></div>
-    <div class="card"><div class="lbl">آمنة عند أقرب اقتراب <bdi dir="ltr" class="ltr">(two-body + J2)</bdi></div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi></div><div class="sub">بعد التحقق العددي؛ خطط النموذج التحليلي وحده: <bdi dir="ltr" data-v="maneuver.cw_selected_plan_safe_rate_in_numerical_truth.two_body_J2" data-fmt="pct"></bdi></div></div>
-    <div class="card"><div class="lbl">عادت ضمن <bdi dir="ltr" class="ltr">50 m / 1 mm/s</bdi></div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></div><div class="sub">أقصى خطأ موضع <bdi dir="ltr" data-v="maneuver.final_J2.resid_r_after_dc_m.max" data-fmt="2" data-unit="m"></bdi></div></div>
+    <div class="card"><div class="lbl">الخطط الاسمية الآمنة عند أقرب اقتراب (تحقق يشمل <bdi dir="ltr" class="ltr">J2</bdi>)</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi></div><div class="sub">بعد التحقق العددي؛ خطط النموذج التحليلي وحده: <bdi dir="ltr" data-v="maneuver.cw_selected_plan_safe_rate_in_numerical_truth.two_body_J2" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">الخطط الاسمية العائدة ضمن <bdi dir="ltr" class="ltr">50 m / 1 mm/s</bdi></div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></div><div class="sub">أقصى خطأ موضع <bdi dir="ltr" data-v="maneuver.final_J2.resid_r_after_dc_m.max" data-fmt="2" data-unit="m"></bdi></div></div>
     <div class="card"><div class="lbl">الوسيط لـ <bdi dir="ltr" class="ltr">Δv</bdi>: تجنب + استعادة</div><div class="big"><bdi dir="ltr" data-v="maneuver.final_J2.dv_total.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi></div><div class="sub">التجنب <bdi dir="ltr" data-v="maneuver.final_J2.dv_avoid.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi> + الاستعادة <bdi dir="ltr" data-v="maneuver.final_J2.dv_recovery.median" data-fmt="2" data-scale="100" data-unit="cm/s"></bdi></div></div>
   </div>
-  <p><strong>النتيجة الرئيسية للإصدار الثاني:</strong> استعادة مسار المهمة تكلف وقودًا أكثر من تجنب الحطام نفسه. عندما تُنفَّذ دفعة التجنب قبل <bdi dir="ltr" class="ltr">TCA</bdi> بيومين، ينجرف القمر نحو كيلومترين عن موقعه الاسمي. والعودة خلال نحو <bdi dir="ltr" data-v="maneuver.recovery_end_after_tca_h.median" data-fmt="0" data-unit="h"></bdi> بعد <bdi dir="ltr" class="ltr">TCA</bdi> تحتاج في الوسيط إلى <bdi dir="ltr" data-v="maneuver.recovery_ratio_rec_over_avoid.median" data-fmt="1"></bdi> ضعف <bdi dir="ltr" class="ltr">Δv</bdi> التجنب. ومن دون استعادة (الإصدار الأول) يبقى القمر على بعد <bdi dir="ltr" data-v="maneuver.architectures.M0_avoidance_only.deviation_tca_plus_2d_m.median" data-fmt="0" data-scale="0.001" data-unit="km"></bdi> من موقعه الاسمي بعد يومين من <bdi dir="ltr" class="ltr">TCA</bdi>. أما العودة بدفعتين فتستعيد شكل المدار لكنها تترك فرقًا طوريًا وسيطه <bdi dir="ltr" data-v="maneuver.architectures.M1_two_impulse_orbit_restore.phase_offset_m.median" data-fmt="1" data-scale="0.001" data-unit="km"></bdi>.</p>
+  <p><strong>النتيجة الرئيسية للمناورة:</strong> استعادة مسار المهمة تكلف وقودًا أكثر من تجنب الحطام نفسه. العودة خلال نحو <bdi dir="ltr" data-v="maneuver.recovery_end_after_tca_h.median" data-fmt="0" data-unit="h"></bdi> بعد <bdi dir="ltr" class="ltr">TCA</bdi> تحتاج في الوسيط إلى <bdi dir="ltr" data-v="maneuver.recovery_ratio_rec_over_avoid.median" data-fmt="1"></bdi> ضعف <bdi dir="ltr" class="ltr">Δv</bdi> التجنب. ومع التجنب وحده (دون عودة) يبقى القمر على بعد <bdi dir="ltr" data-v="maneuver.architectures.M0_avoidance_only.deviation_tca_plus_2d_m.median" data-fmt="0" data-unit="km" data-scale="0.001"></bdi> من موقعه الاسمي بعد يومين من <bdi dir="ltr" class="ltr">TCA</bdi>. أما دفعة العودة الواحدة فتستعيد شكل المدار لكنها تترك فرقًا طوريًا وسيطه <bdi dir="ltr" data-v="maneuver.architectures.M1_two_impulse_orbit_restore.phase_offset_m.median" data-fmt="1" data-unit="km" data-scale="0.001"></bdi>. ومدة العودة <bdi dir="ltr" data-v="maneuver.k_star_orbits" data-fmt="int"></bdi> مدارًا هي المدة المختارة ضمن النافذة المختبرة (من <bdi dir="ltr" class="ltr num">1</bdi> إلى <bdi dir="ltr" class="ltr num">32</bdi> مدارًا)، لا مثلى مثبتة.</p>
   <div class="figs">
-    <figure><img src="../assets/figures/v2_man_trajectory.png" alt="مسارات التجنب والاستعادة" loading="lazy"><figcaption>الهندسة الحقيقية للحدث <bdi dir="ltr" class="ltr">880</bdi>: تجنب ← عبور آمن ← استعادة.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_fuel_cost.png" alt="الوقود الإضافي لاستعادة المهمة" loading="lazy"><figcaption>الوقود الإضافي اللازم لاستعادة مسار المهمة.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_recovery_tradeoff.png" alt="زمن الاستعادة مقابل Δv" loading="lazy"><figcaption>العودة الأسرع تكلف وقودًا أكثر، والدفع عند مدارات كاملة (العودة الطورية) أرخص بكثير من الانتقال العام بين نقطتين.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_closest_approach.png" alt="أقرب اقتراب مع المناورة وبدونها" loading="lazy"><figcaption>أقرب اقتراب مع المناورة وبدونها (الحدث <bdi dir="ltr" class="ltr">880</bdi>).</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_numerical_validation.png" alt="مقارنة النموذج التحليلي والعددي" loading="lazy"><figcaption>التخطيط التحليلي السريع مقابل التكامل العددي الدقيق، ودقة الاستعادة.</figcaption></figure>
-    <figure><img src="../assets/figures/v2_man_dv_distribution.png" alt="توزيع Δv" loading="lazy"><figcaption>توزيع <bdi dir="ltr" class="ltr">Δv</bdi> لكل حدث.</figcaption></figure>
+    <figure><img src="../assets/figures/man_trajectory.png" alt="مسارات التجنب والاستعادة" loading="lazy"><figcaption>الهندسة الحقيقية للحدث <bdi dir="ltr" class="ltr">880</bdi>: تجنب ← عبور آمن ← استعادة.</figcaption></figure>
+    <figure><img src="../assets/figures/man_fuel_cost.png" alt="الوقود الإضافي لاستعادة المهمة" loading="lazy"><figcaption>الوقود الإضافي اللازم لاستعادة مسار المهمة.</figcaption></figure>
+    <figure><img src="../assets/figures/man_recovery_tradeoff.png" alt="زمن الاستعادة مقابل Δv" loading="lazy"><figcaption>العودة الأسرع تكلف وقودًا أكثر، والدفع عند مدارات كاملة (العودة الطورية) أرخص بكثير من الانتقال العام بين نقطتين.</figcaption></figure>
+    <figure><img src="../assets/figures/man_closest_approach.png" alt="أقرب اقتراب مع المناورة وبدونها" loading="lazy"><figcaption>أقرب اقتراب مع المناورة وبدونها (الحدث <bdi dir="ltr" class="ltr">880</bdi>).</figcaption></figure>
+    <figure><img src="../assets/figures/man_numerical_validation.png" alt="مقارنة النموذج التحليلي والعددي" loading="lazy"><figcaption>التخطيط التحليلي السريع مقابل التكامل العددي الدقيق، ودقة الاستعادة.</figcaption></figure>
+    <figure><img src="../assets/figures/man_dv_distribution.png" alt="توزيع Δv" loading="lazy"><figcaption>توزيع <bdi dir="ltr" class="ltr">Δv</bdi> لكل حدث.</figcaption></figure>
   </div>
 
-  <h3>عدم اليقين: ماذا لو لم تكن الكاميرا مثالية؟ <span class="badge sim">مُحاكى</span></h3>
+  <h3>التجنب تحت عدم اليقين: ماذا لو لم تكن الكاميرا مثالية؟ <span class="badge sim">مُحاكى</span></h3>
   <p>شملت محاكاة <bdi dir="ltr" class="ltr">Monte Carlo</bdi> <bdi dir="ltr" data-v="uncertainty.events" data-fmt="int"></bdi> حدثًا، بواقع <bdi dir="ltr" data-v="uncertainty.n_mc_per_event_case" data-fmt="int"></bdi> محاولة لكل إعداد. خطأ اتجاه الكاميرا مأخوذ من تجربة التتبع: المعتاد <bdi dir="ltr" data-v="uncertainty.sigmas_deg.typical_camera_track" data-fmt="3" data-unit="°"></bdi>، ومع حالة فشل التتبع <bdi dir="ltr" data-v="uncertainty.sigmas_deg.including_track_failures" data-fmt="2" data-unit="°"></bdi>، على مسافة <bdi dir="ltr" class="ltr">10 km</bdi>. لكل دفعة خطأ في المقدار <bdi dir="ltr" class="ltr">2%</bdi> وفي الاتجاه <bdi dir="ltr" class="ltr">1°</bdi>، وتعتمد دفعات الاستعادة على ملاحة القمر نفسه <bdi dir="ltr" class="ltr">(1 m, 0.5 mm/s)</bdi>. ويفترض هامش الأمان <bdi dir="ltr" class="ltr">k·σ</bdi> أن الجسم أقرب مما قُدِّر.</p>
   <div class="table-wrap"><table id="unc-table"></table></div>
-  <figure><img src="../assets/figures/v2_unc_margin.png" alt="هامش الأمان مقابل الأمان وΔv وخطأ الاستعادة" loading="lazy"><figcaption>هامش الأمان مقابل نسبة الأمان و<bdi dir="ltr" class="ltr">Δv</bdi> وخطأ الاستعادة.</figcaption></figure>
+  <figure><img src="../assets/figures/unc_margin.png" alt="هامش الأمان مقابل الأمان وΔv وخطأ الاستعادة" loading="lazy"><figcaption>هامش الأمان مقابل نسبة الأمان و<bdi dir="ltr" class="ltr">Δv</bdi> وخطأ الاستعادة.</figcaption></figure>
 
-  <h4>الاستعادة مع أخطاء الدفع والملاحة</h4>
-  <p>مع أخطاء دفع <bdi dir="ltr" class="ltr">2% / 1°</bdi>، لم تحقق العودة "المفتوحة" المسجَّلة مسبقًا (الدفعتان 2 و3 فقط) حد التسامح <bdi dir="ltr" class="ltr">50 m / 1 mm/s</bdi> إلا في <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> من المحاولات، لأن الخطأ الصغير ينجرف نحو يومين. أضافت تجربة جديدة معلنة <strong>توجيهًا مغلق الحلقة</strong>: تحديد المدار من سلسلة قراءات <bdi dir="ltr" class="ltr">GNSS</bdi>، وثلاثة تصحيحات صغيرة للانجراف، وتصحيحًا أخيرًا. وهذا هو تصميم الاستعادة النهائي في الإصدار الثاني.</p>
+  <h3>العودة تحت عدم اليقين: أخطاء الدفع والملاحة <span class="badge sim">مُحاكى</span></h3>
+  <p>مع أخطاء دفع <bdi dir="ltr" class="ltr">2% / 1°</bdi>، لم تحقق العودة "المفتوحة" المسجَّلة مسبقًا (الدفعتان 2 و3 فقط) حد التسامح <bdi dir="ltr" class="ltr">50 m / 1 mm/s</bdi> إلا في <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> من المحاولات، لأن الخطأ الصغير ينجرف نحو يومين. أضافت تجربة معلنة منفصلة <strong>توجيهًا مغلق الحلقة</strong> فوق الدفعات الرئيسية الثلاث: تحديد المدار من سلسلة قراءات <bdi dir="ltr" class="ltr">GNSS</bdi>، وثلاثة تصحيحات صغيرة للانجراف، وتصحيحًا أخيرًا. هذا هو تصميم العودة النهائي، ونسبة نجاحه تعود إلى الدفعات الثلاث <em>مع</em> هذه التصحيحات، لا إلى الدفعات الثلاث وحدها.</p>
   <div class="cards">
     <div class="card"><div class="lbl">توجيه مفتوح (مسجَّل مسبقًا)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">وسيط الخطأ <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.rr_median" data-fmt="0" data-unit="m"></bdi></div></div>
     <div class="card"><div class="lbl">توجيه مغلق الحلقة (النهائي)</div><div class="big"><bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">وسيط الخطأ <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.rr_median" data-fmt="1" data-unit="m"></bdi> · زيادة <bdi dir="ltr" class="ltr">Δv</bdi> بنسبة <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.dv_increase_vs_open_loop_pct" data-fmt="1" data-unit="%"></bdi></div></div>
   </div>
-  <figure><img src="../assets/figures/v2_unc_recovery_guidance.png" alt="نجاح الاستعادة لتصاميم توجيه وملاحة مختلفة" loading="lazy"><figcaption>خطأ الملاحة في السرعة كان العامل المحدِّد، وتحديد المدار مع تصحيحات صغيرة يعيد تحقيق حد التسامح.</figcaption></figure>
+  <figure><img src="../assets/figures/unc_recovery_guidance.png" alt="نجاح الاستعادة لتصاميم توجيه وملاحة مختلفة" loading="lazy"><figcaption>خطأ الملاحة في السرعة كان العامل المحدِّد، وتحديد المدار مع تصحيحات صغيرة يعيد تحقيق حد التسامح.</figcaption></figure>
 
-  <h3>من الإصدار الأول إلى الثاني</h3>
+  <h3>الاختبار المتكامل النهائي <span class="badge sim">مُحاكى</span> على هندسة <span class="badge real">حقيقية</span></h3>
+  <p>كل محاولة <bdi dir="ltr" class="ltr">Monte Carlo</bdi> تمر بالسلسلة كلها: خطأ اتجاه الكاميرا (مع فشل التتبع بمعدله المَقيس) ← خطة تجنب بهامش <bdi dir="ltr" class="ltr">3σ</bdi> ← تنفيذ الدفعة بخطأ ← فحص الأمان على هندسة <bdi dir="ltr" class="ltr">ESA</bdi> الحقيقية ← عودة مغلقة الحلقة (ثلاث دفعات رئيسية وتصحيحات صغيرة، بخطأ في كل دفعة، وملاحة بتحديد المدار). <strong>النجاح: آمن عند <bdi dir="ltr" class="ltr">TCA</bdi> وعائد ضمن <bdi dir="ltr" class="ltr">50 m / 1 mm/s</bdi> في المحاولة نفسها.</strong></p>
+  <div class="cards">
+    <div class="card"><div class="lbl">آمن عند <bdi dir="ltr" class="ltr">TCA</bdi> وعائد معًا</div><div class="big"><bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_rate" data-fmt="pct"></bdi></div><div class="sub">فترة الثقة <bdi dir="ltr" class="ltr">95%</bdi>: <bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_ci95_event_bootstrap.0" data-fmt="pct"></bdi> – <bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_ci95_event_bootstrap.1" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">آمن عند <bdi dir="ltr" class="ltr">TCA</bdi></div><div class="big"><bdi dir="ltr" data-v="end_to_end.headline.safe_rate" data-fmt="pct"></bdi></div><div class="sub">مع خطأ الكاميرا المعتاد فقط: <bdi dir="ltr" data-v="end_to_end.cases.typical_camera_track.safe_rate" data-fmt="pct"></bdi></div></div>
+    <div class="card"><div class="lbl">عائد ضمن حد التسامح</div><div class="big"><bdi dir="ltr" data-v="end_to_end.headline.recovered_rate" data-fmt="pct"></bdi></div><div class="sub">عودة مغلقة الحلقة</div></div>
+    <div class="card"><div class="lbl">عدد الأحداث</div><div class="big"><bdi dir="ltr" data-v="end_to_end.events" data-fmt="int"></bdi></div><div class="sub">حدثًا × <bdi dir="ltr" data-v="end_to_end.draws_per_event_case" data-fmt="int"></bdi> محاولة لكل حالة</div></div>
+  </div>
+  <h3>أربعة مستويات من الأدلة</h3>
   <div class="table-wrap"><table>
-    <thead><tr><th></th><th>الإصدار الأول</th><th>الإصدار الثاني</th></tr></thead>
+    <thead><tr><th>المستوى</th><th>ما الذي يُختبر</th><th>النتيجة</th></tr></thead>
     <tbody>
-      <tr><td>التنبؤ</td><td>لم يتفوق أي نموذج على خط الأساس (درجة <bdi dir="ltr" class="ltr">Random Forest</bdi>: <bdi dir="ltr" class="ltr num">0.967</bdi>)</td><td>الهجين المحروس <bdi dir="ltr" data-v="prediction.selected.test.L" data-fmt="3"></bdi> مقابل خط الأساس <bdi dir="ltr" data-v="prediction.baseline.test.L" data-fmt="3"></bdi>: تحسن صغير أمين وغير دال إحصائيًا، مع مقارنة أوسع (مرحلتان، انحدار، <bdi dir="ltr" class="ltr">GRU</bdi>).</td></tr>
-      <tr><td>المناورة</td><td>تجنب فقط، ويبقى القمر خارج مداره</td><td>تجنب ثم عبور آمن ثم عودة طورية إلى المسار الاسمي (ثلاث دفعات)</td></tr>
-      <tr><td>التحقق</td><td>نموذج <bdi dir="ltr" class="ltr">Clohessy–Wiltshire</bdi></td><td>تحقق عددي <bdi dir="ltr" class="ltr">(two-body + J2)</bdi> لكل خطة مع إصلاح تلقائي</td></tr>
-      <tr><td>عدم اليقين</td><td>التجنب فقط</td><td>التجنب <em>و</em>الاستعادة: أخطاء الرصد والتنفيذ والملاحة</td></tr>
-      <tr><td>العرض</td><td>صفحات خطوة بخطوة</td><td>غرفة تحكم تفاعلية، وسيناريوهات إخفاق، وثنائية اللغة</td></tr>
+      <tr><td>اسمي متحقق منه عدديًا</td><td>خطة واحدة لكل حدث، دون أخطاء، تحقق يشمل <bdi dir="ltr" class="ltr">J2</bdi></td><td>آمن <bdi dir="ltr" data-v="maneuver.final_J2.safe_rate_tca" data-fmt="pct0"></bdi> · عائد <bdi dir="ltr" data-v="maneuver.final_J2.recovered_rate_after_dc" data-fmt="pct0"></bdi></td></tr>
+      <tr><td>التجنب تحت عدم اليقين</td><td>أخطاء الكاميرا والتنفيذ، هامش <bdi dir="ltr" class="ltr">3σ</bdi></td><td>كاميرا معتادة <bdi dir="ltr" data-v="uncertainty_headline.typical_3sigma.safe_rate" data-fmt="pct"></bdi> · فشل تتبع في كل محاولة <bdi dir="ltr" data-v="uncertainty_headline.failure_3sigma.safe_rate" data-fmt="pct"></bdi></td></tr>
+      <tr><td>العودة تحت عدم اليقين</td><td>أخطاء التنفيذ والملاحة</td><td>مفتوحة <bdi dir="ltr" data-v="recovery_robustness.by_config.open_loop.recovered_rate" data-fmt="pct"></bdi> ← مغلقة الحلقة <bdi dir="ltr" data-v="recovery_robustness.by_config.mcc3_od_trim.recovered_rate" data-fmt="pct"></bdi></td></tr>
+      <tr><td><strong>الاختبار المتكامل</strong></td><td>كل ما سبق في المحاولة نفسها</td><td><strong>آمن وعائد <bdi dir="ltr" data-v="end_to_end.headline.safe_and_recovered_rate" data-fmt="pct"></bdi></strong></td></tr>
     </tbody></table></div>
+  <figure><img src="../assets/figures/e2e_levels.png" alt="أربعة مستويات من الأدلة" loading="lazy"><figcaption>من الخطط الاسمية دون أخطاء إلى الاختبار المتكامل الذي يجمع كل الأخطاء في المحاولة نفسها.</figcaption></figure>
 </div></section>
 
 <section class="content" id="limits"><div class="wrap">
@@ -198,7 +250,8 @@
     <li><strong>الكاميرا:</strong> الصور اصطناعية، فهناك فجوة بين المحاكاة والواقع. الكاميرا الواحدة تقيس الاتجاه لا المسافة بموثوقية، وتقدير المسافة من الحجم الظاهري استكشافي فقط. والتسلسل البصري أبطأ وأقرب من اقتراب حقيقي سرعته نحو <bdi dir="ltr" class="ltr">12 km/s</bdi>.</li>
     <li><strong>الديناميكا:</strong> التخطيط بنموذج <bdi dir="ltr" class="ltr">Clohessy–Wiltshire</bdi> (مدار دائري)، والتحقق يشمل <bdi dir="ltr" class="ltr">J2</bdi> دون مقاومة الغلاف الجوي أو ضغط الإشعاع الشمسي، ويُحسب <bdi dir="ltr" class="ltr">Pc</bdi> بتقريب ثنائي الأبعاد للاقتراب القصير.</li>
     <li><strong>العتبات:</strong> قاعدة الأمان <bdi dir="ltr" class="ltr">(1 km / 10⁻⁶)</bdi> وحد الاستعادة <bdi dir="ltr" class="ltr">(50 m / 1 mm/s)</bdi> قيم تصميم تجريبية، لا متطلبات وكالات فضاء.</li>
-    <li><strong>محاكاة <bdi dir="ltr" class="ltr">Monte Carlo</bdi>:</strong> تستخدم النموذج التحليلي بوصفه الحقيقة، ويُعالَج خطأ النموذج منفصلًا بخطوة التحقق العددي. ويغطي هامش الأمان خطأ الرصد فقط، فقد تفشل الخطط الأرخص بسبب خطأ تنفيذ الدفع (إضافة هامش لخطأ التنفيذ عمل مستقبلي).</li>
+    <li><strong>محاكاة <bdi dir="ltr" class="ltr">Monte Carlo</bdi>:</strong> تنتشر الحركة فيها بنموذج <bdi dir="ltr" class="ltr">Clohessy–Wiltshire</bdi> التحليلي (ليست محاكاة <bdi dir="ltr" class="ltr">J2</bdi>)، وقد تحققنا من <bdi dir="ltr" class="ltr">J2</bdi> للخطط الاسمية. ويغطي هامش الأمان خطأ الرصد فقط، فقد تفشل الخطط الأرخص بسبب خطأ تنفيذ الدفع (إضافة هامش لخطأ التنفيذ عمل مستقبلي).</li>
+    <li><strong>فشل التتبع</strong> أضعف حلقة: إذا ثبّت المتتبِّع على كشف خاطئ تُبنى خطة التجنب على اتجاه خاطئ، ويحتاج النظام الحقيقي فحصًا آليًا لجودة التتبع.</li>
     <li>لم يُنفَّذ أي مناورة على قمر حقيقي، والنظام ليس برنامج طيران.</li>
   </ul>
 </div></section>
